@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Models\TestItem;
+use App\Models\Tree;
 use App\Models\User;
 use App\Policies\TestItemPolicy;
+use App\Policies\TreePolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(TestItem::class, TestItemPolicy::class);
+        Gate::policy(Tree::class, TreePolicy::class);
 
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by($request->input('email').'|'.$request->ip());

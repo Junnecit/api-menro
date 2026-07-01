@@ -8,7 +8,6 @@ use App\Http\Resources\UserResource;
 use App\Services\ProfilePhotoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
@@ -43,7 +42,7 @@ class ProfileController extends Controller
             'success' => true,
             'message' => 'Profile photo uploaded successfully.',
             'data' => [
-                'profile_photo_url' => Storage::disk('public')->url($path),
+                'profile_photo_url' => $request->getSchemeAndHttpHost().'/storage/'.$path,
             ],
         ]);
     }

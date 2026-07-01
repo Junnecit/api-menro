@@ -17,4 +17,9 @@ class Agency extends Model
     {
         return $this->hasMany(Request::class);
     }
+
+    public function trees()
+    {
+        return $this->hasMany(Tree::class);
+    }
 }

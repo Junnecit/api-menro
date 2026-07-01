@@ -12,6 +12,14 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
+    public function options(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => User::orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', User::class);

@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TestItemController;
+use App\Http\Controllers\TreeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::match(['put', 'patch'], 'profile/update', [ProfileController::class, 'update']);
     Route::post('profile/photo', [ProfileController::class, 'uploadPhoto']);
     Route::delete('profile/photo', [ProfileController::class, 'removePhoto']);
+    Route::get('users/options', [UserController::class, 'options']);
 
     Route::middleware('role:super-admin,admin')->group(function () {
         Route::get('roles', [RoleController::class, 'index']);
@@ -36,4 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::apiResource('test-items', TestItemController::class);
+
+    Route::get('agencies', [AgencyController::class, 'index']);
+    Route::apiResource('trees', TreeController::class);
 });
