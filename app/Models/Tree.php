@@ -11,6 +11,7 @@ class Tree extends Model
 {
     protected $fillable = [
         'tree_code',
+        'client_uuid',
         'species',
         'common_name',
         'status',

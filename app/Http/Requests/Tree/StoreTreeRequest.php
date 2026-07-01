@@ -16,6 +16,7 @@ class StoreTreeRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'client_uuid' => ['nullable', 'uuid'],
             'species' => ['required', 'string', 'max:255'],
             'common_name' => ['nullable', 'string', 'max:255'],
             'status' => ['required', Rule::enum(TreeStatus::class)],

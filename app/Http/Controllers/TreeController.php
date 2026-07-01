@@ -6,6 +6,7 @@ use App\Http\Requests\Tree\StoreTreeRequest;
 use App\Http\Requests\Tree\UpdateTreeRequest;
 use App\Http\Resources\TreeResource;
 use App\Models\Tree;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,11 +34,42 @@ class TreeController extends Controller
     {
         $this->authorize('create', Tree::class);
 
-        $tree = Tree::create([
-            ...$request->safe()->except('photos'),
-            'date_recorded' => now()->toDateString(),
-            'recorded_by_id' => $request->user()->id,
-        ]);
+        $clientUuid = $request->input('client_uuid');
+
+        if ($clientUuid) {
+            $existing = Tree::where('client_uuid', $clientUuid)->with(self::RELATIONS)->first();
+
+            if ($existing) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Tree created successfully.',
+                    'data' => new TreeResource($existing),
+                ], 200);
+            }
+        }
+
+        try {
+            $tree = Tree::create([
+                ...$request->safe()->except('photos'),
+                'date_recorded' => now()->toDateString(),
+                'recorded_by_id' => $request->user()->id,
+            ]);
+        } catch (QueryException $e) {
+            // Another request with the same client_uuid won the race and
+            // inserted first; return that row instead of a 500.
+            if ($clientUuid && $e->getCode() === '23000') {
+                $existing = Tree::where('client_uuid', $clientUuid)->with(self::RELATIONS)->first();
+                if ($existing) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Tree created successfully.',
+                        'data' => new TreeResource($existing),
+                    ], 200);
+                }
+            }
+
+            throw $e;
+        }
 
         $tree->update(['tree_code' => sprintf('TGL-%s-%05d', now()->format('Y'), $tree->id)]);
 
