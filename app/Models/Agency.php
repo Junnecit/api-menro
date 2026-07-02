@@ -9,8 +9,14 @@ class Agency extends Model
     protected $fillable = [
         'initials',
         'name',
+        'type',
+        'contact',
+        'email',
+        'phone',
+        'location',
         'soil_type',
-        'color'
+        'color',
+        'status',
     ];
 
     public function requests()

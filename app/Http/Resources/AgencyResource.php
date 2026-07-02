@@ -13,8 +13,15 @@ class AgencyResource extends JsonResource
             'id' => $this->id,
             'initials' => $this->initials,
             'name' => $this->name,
+            'type' => $this->type,
+            'contact' => $this->contact,
+            'email' => $this->email,
+            'phone' => $this->phone,
+            'location' => $this->location,
             'soil_type' => $this->soil_type,
             'color' => $this->color,
+            'status' => $this->status,
+            'requests_count' => $this->whenCounted('requests'),
         ];
     }
 }

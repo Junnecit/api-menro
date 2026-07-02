@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RequestController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TestItemController;
 use App\Http\Controllers\TreeController;
@@ -41,5 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('test-items', TestItemController::class);
 
     Route::get('agencies', [AgencyController::class, 'index']);
+    Route::get('requests', [RequestController::class, 'index']);
+    Route::get('dashboard/stats', [DashboardController::class, 'stats']);
     Route::apiResource('trees', TreeController::class);
 });

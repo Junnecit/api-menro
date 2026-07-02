@@ -12,7 +12,9 @@ class AgencyController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => AgencyResource::collection(Agency::orderBy('name')->get()),
+            'data' => AgencyResource::collection(
+                Agency::withCount('requests')->orderBy('name')->get()
+            ),
         ]);
     }
 }
