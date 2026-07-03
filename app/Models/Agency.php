@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Agency extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'initials',
         'name',
@@ -13,7 +16,12 @@ class Agency extends Model
         'contact',
         'email',
         'phone',
+        'region_code',
+        'province_code',
+        'municipality_code',
+        'barangay_code',
         'location',
+        'custom_address',
         'soil_type',
         'color',
         'status',

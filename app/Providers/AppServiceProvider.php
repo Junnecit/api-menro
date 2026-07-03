@@ -2,9 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\Agency;
+use App\Models\Request as PlantingRequestModel;
 use App\Models\TestItem;
 use App\Models\Tree;
 use App\Models\User;
+use App\Policies\AgencyPolicy;
+use App\Policies\RequestPolicy;
 use App\Policies\TestItemPolicy;
 use App\Policies\TreePolicy;
 use App\Policies\UserPolicy;
@@ -24,6 +28,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(Agency::class, AgencyPolicy::class);
+        Gate::policy(PlantingRequestModel::class, RequestPolicy::class);
         Gate::policy(TestItem::class, TestItemPolicy::class);
         Gate::policy(Tree::class, TreePolicy::class);
 
