@@ -15,10 +15,13 @@ class RequestResource extends JsonResource
             'agency' => new AgencyResource($this->whenLoaded('agency')),
             'agency_id' => $this->agency_id,
             'requester_name' => $this->requester_name,
+            'barangay_code' => $this->barangay_code,
             'location' => $this->location,
+            'custom_address' => $this->custom_address,
             'status' => $this->status,
             'request_date' => $this->request_date?->toDateString(),
             'created_at' => $this->created_at?->toISOString(),
+            'deleted_at' => $this->deleted_at?->toISOString(),
         ];
     }
 }

@@ -37,13 +37,23 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('role:super-admin,admin')->group(function () {
         Route::get('roles', [RoleController::class, 'index']);
+        Route::get('users/trash', [UserController::class, 'trash']);
+        Route::post('users/{id}/restore', [UserController::class, 'restore']);
+        Route::delete('users/{id}/force', [UserController::class, 'forceDestroy']);
         Route::apiResource('users', UserController::class);
     });
 
     Route::apiResource('test-items', TestItemController::class);
 
-    Route::get('agencies', [AgencyController::class, 'index']);
-    Route::get('requests', [RequestController::class, 'index']);
+    Route::get('locations/barangays', [RequestController::class, 'barangays']);
+    Route::get('agencies/trash', [AgencyController::class, 'trash']);
+    Route::post('agencies/{id}/restore', [AgencyController::class, 'restore']);
+    Route::delete('agencies/{id}/force', [AgencyController::class, 'forceDestroy']);
+    Route::apiResource('agencies', AgencyController::class);
+    Route::get('requests/trash', [RequestController::class, 'trash']);
+    Route::post('requests/{id}/restore', [RequestController::class, 'restore']);
+    Route::delete('requests/{id}/force', [RequestController::class, 'forceDestroy']);
+    Route::apiResource('requests', RequestController::class);
     Route::get('dashboard/stats', [DashboardController::class, 'stats']);
     Route::apiResource('trees', TreeController::class);
 });

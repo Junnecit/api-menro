@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\PlantingRequest\StorePlantingRequestRequest;
+use App\Http\Requests\PlantingRequest\UpdatePlantingRequestRequest;
 use App\Http\Resources\RequestResource;
 use App\Models\Request as PlantingRequest;
+use App\Support\TagoloanLocation;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,17 +15,182 @@ class RequestController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = PlantingRequest::with('agency')
-            ->orderByDesc('request_date')
-            ->orderByDesc('id');
+        $this->authorize('viewAny', PlantingRequest::class);
 
-        if ($request->filled('limit')) {
-            $query->limit($request->integer('limit'));
-        }
+        return $this->paginatedResponse(
+            $this->filteredQuery($request, PlantingRequest::query()),
+            $request
+        );
+    }
+
+    public function trash(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', PlantingRequest::class);
+
+        return $this->paginatedResponse(
+            $this->filteredQuery($request, PlantingRequest::onlyTrashed()),
+            $request
+        );
+    }
+
+    public function barangays(): JsonResponse
+    {
+        $this->authorize('viewAny', PlantingRequest::class);
+
+        $barangays = collect(config('tagoloan.barangays', []))
+            ->map(fn (string $name, string $code) => [
+                'code' => $code,
+                'name' => $name,
+                'label' => TagoloanLocation::formatLocation($code),
+            ])
+            ->values();
 
         return response()->json([
             'success' => true,
-            'data' => RequestResource::collection($query->get()),
+            'data' => $barangays,
+            'meta' => [
+                'municipality_code' => config('tagoloan.municipality_code'),
+                'location_suffix' => config('tagoloan.location_suffix'),
+            ],
         ]);
+    }
+
+    public function store(StorePlantingRequestRequest $request): JsonResponse
+    {
+        $this->authorize('create', PlantingRequest::class);
+
+        $data = TagoloanLocation::applyBarangay($request->validated());
+        if (empty($data['request_no'])) {
+            $data['request_no'] = $this->generateRequestNo();
+        }
+
+        $plantingRequest = PlantingRequest::create($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Planting request created successfully.',
+            'data' => new RequestResource($plantingRequest->load('agency')),
+        ], 201);
+    }
+
+    public function show(PlantingRequest $request): JsonResponse
+    {
+        $this->authorize('view', $request);
+
+        return response()->json([
+            'success' => true,
+            'data' => new RequestResource($request->load('agency')),
+        ]);
+    }
+
+    public function update(UpdatePlantingRequestRequest $formRequest, PlantingRequest $request): JsonResponse
+    {
+        $this->authorize('update', $request);
+
+        $request->update(TagoloanLocation::applyBarangay($formRequest->validated()));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Planting request updated successfully.',
+            'data' => new RequestResource($request->fresh()->load('agency')),
+        ]);
+    }
+
+    public function destroy(PlantingRequest $request): JsonResponse
+    {
+        $this->authorize('delete', $request);
+
+        $request->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Planting request moved to trash.',
+        ]);
+    }
+
+    public function restore(int $id): JsonResponse
+    {
+        $plantingRequest = PlantingRequest::onlyTrashed()->findOrFail($id);
+        $this->authorize('restore', $plantingRequest);
+
+        $plantingRequest->restore();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Planting request restored successfully.',
+            'data' => new RequestResource($plantingRequest->fresh()->load('agency')),
+        ]);
+    }
+
+    public function forceDestroy(int $id): JsonResponse
+    {
+        $plantingRequest = PlantingRequest::onlyTrashed()->findOrFail($id);
+        $this->authorize('forceDelete', $plantingRequest);
+
+        $plantingRequest->forceDelete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Planting request permanently deleted.',
+        ]);
+    }
+
+    private function filteredQuery(Request $request, Builder $query): Builder
+    {
+        $query = $query->with('agency')
+            ->orderByDesc('request_date')
+            ->orderByDesc('id');
+
+        if ($request->filled('search')) {
+            $search = $request->string('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('request_no', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%")
+                    ->orWhere('requester_name', 'like', "%{$search}%")
+                    ->orWhere('custom_address', 'like', "%{$search}%")
+                    ->orWhereHas('agency', fn ($agencyQuery) => $agencyQuery->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
+        }
+
+        return $query;
+    }
+
+    private function paginatedResponse(Builder $query, Request $request): JsonResponse
+    {
+        if ($request->filled('limit')) {
+            $items = $query->limit($request->integer('limit'))->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => RequestResource::collection($items),
+            ]);
+        }
+
+        $items = $query->paginate($request->integer('per_page', 15));
+
+        return response()->json([
+            'success' => true,
+            'data' => RequestResource::collection($items),
+            'meta' => [
+                'current_page' => $items->currentPage(),
+                'last_page' => $items->lastPage(),
+                'per_page' => $items->perPage(),
+                'total' => $items->total(),
+            ],
+        ]);
+    }
+
+    private function generateRequestNo(): string
+    {
+        $latestNumber = PlantingRequest::withTrashed()
+            ->pluck('request_no')
+            ->map(fn (string $no) => (int) preg_replace('/\D/', '', $no))
+            ->max() ?? 0;
+
+        return '#'.str_pad((string) ($latestNumber + 1), 5, '0', STR_PAD_LEFT);
     }
 }

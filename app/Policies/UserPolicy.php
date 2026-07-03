@@ -50,4 +50,22 @@ class UserPolicy
 
         return true;
     }
+
+    public function restore(User $user, User $model): bool
+    {
+        if (! $user->isAdminOrAbove()) {
+            return false;
+        }
+
+        if ($model->isSuperAdmin() && ! $user->isSuperAdmin()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function forceDelete(User $user, User $model): bool
+    {
+        return $this->restore($user, $model);
+    }
 }

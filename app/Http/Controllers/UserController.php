@@ -24,23 +24,18 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $users = User::with('role')
-            ->search($request->query('search'))
-            ->roleSlug($request->query('role'))
-            ->status($request->query('status'))
-            ->latest()
-            ->paginate($request->integer('per_page', 15));
+        return $this->paginatedResponse(
+            $this->filteredQuery($request, User::query())
+        );
+    }
 
-        return response()->json([
-            'success' => true,
-            'data' => UserResource::collection($users),
-            'meta' => [
-                'current_page' => $users->currentPage(),
-                'last_page' => $users->lastPage(),
-                'per_page' => $users->perPage(),
-                'total' => $users->total(),
-            ],
-        ]);
+    public function trash(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', User::class);
+
+        return $this->paginatedResponse(
+            $this->filteredQuery($request, User::onlyTrashed())
+        );
     }
 
     public function store(StoreUserRequest $request): JsonResponse
@@ -113,7 +108,67 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'User deleted successfully.',
+            'message' => 'User moved to trash.',
+        ]);
+    }
+
+    public function restore(int $id): JsonResponse
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $this->authorize('restore', $user);
+
+        $user->restore();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User restored successfully.',
+            'data' => new UserResource($user->fresh()->load('role')),
+        ]);
+    }
+
+    public function forceDestroy(int $id): JsonResponse
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $this->authorize('forceDelete', $user);
+
+        if ($user->testItems()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot permanently delete a user with linked test items.',
+            ], 422);
+        }
+
+        $user->tokens()->delete();
+        $user->forceDelete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User permanently deleted.',
+        ]);
+    }
+
+    private function filteredQuery(Request $request, $query)
+    {
+        return $query->with('role')
+            ->search($request->query('search'))
+            ->roleSlug($request->query('role'))
+            ->status($request->query('status'))
+            ->latest();
+    }
+
+    private function paginatedResponse($query): JsonResponse
+    {
+        $users = $query->paginate(request()->integer('per_page', 15));
+
+        return response()->json([
+            'success' => true,
+            'data' => UserResource::collection($users),
+            'meta' => [
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
+                'per_page' => $users->perPage(),
+                'total' => $users->total(),
+            ],
         ]);
     }
 }
