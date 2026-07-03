@@ -25,6 +25,7 @@ class Tree extends Model
         'landmark',
         'inspector_id',
         'recorded_by_id',
+        'updated_by_id',
         'agency_id',
         'notes',
     ];
@@ -53,6 +54,11 @@ class Tree extends Model
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by_id');
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by_id');
     }
 
     public function photos(): HasMany

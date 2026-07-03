@@ -28,6 +28,8 @@ class TreeResource extends JsonResource
             'inspector_id' => $this->inspector_id,
             'recorded_by' => new UserResource($this->whenLoaded('recordedBy')),
             'recorded_by_id' => $this->recorded_by_id,
+            'updated_by' => new UserResource($this->whenLoaded('updatedBy')),
+            'updated_by_id' => $this->updated_by_id,
             'agency' => new AgencyResource($this->whenLoaded('agency')),
             'agency_id' => $this->agency_id,
             'photos' => TreePhotoResource::collection($this->whenLoaded('photos')),

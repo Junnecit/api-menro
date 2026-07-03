@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 
 class TreeController extends Controller
 {
-    private const RELATIONS = ['agency', 'inspector', 'recordedBy', 'photos'];
+    private const RELATIONS = ['agency', 'inspector', 'recordedBy', 'updatedBy', 'photos'];
 
     public function index(Request $request): JsonResponse
     {
@@ -100,7 +100,10 @@ class TreeController extends Controller
     {
         $this->authorize('update', $tree);
 
-        $tree->update($request->validated());
+        $tree->update([
+            ...$request->validated(),
+            'updated_by_id' => $request->user()->id,
+        ]);
 
         return response()->json([
             'success' => true,
