@@ -3,11 +3,13 @@
 namespace App\Providers;
 
 use App\Models\Agency;
+use App\Models\PlantingMonitoring;
 use App\Models\Request as PlantingRequestModel;
 use App\Models\TestItem;
 use App\Models\Tree;
 use App\Models\User;
 use App\Policies\AgencyPolicy;
+use App\Policies\PlantingMonitoringPolicy;
 use App\Policies\RequestPolicy;
 use App\Policies\TestItemPolicy;
 use App\Policies\TreePolicy;
@@ -32,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(PlantingRequestModel::class, RequestPolicy::class);
         Gate::policy(TestItem::class, TestItemPolicy::class);
         Gate::policy(Tree::class, TreePolicy::class);
+        Gate::policy(PlantingMonitoring::class, PlantingMonitoringPolicy::class);
 
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by($request->input('email').'|'.$request->ip());
