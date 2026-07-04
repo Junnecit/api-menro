@@ -36,7 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('profile/photo', [ProfileController::class, 'removePhoto']);
     Route::get('users/options', [UserController::class, 'options']);
 
-    Route::middleware('role:super-admin,admin')->group(function () {
+    Route::middleware('role:super-admin')->group(function () {
         Route::get('roles', [RoleController::class, 'index']);
         Route::get('users/trash', [UserController::class, 'trash']);
         Route::post('users/{id}/restore', [UserController::class, 'restore']);

@@ -9,6 +9,8 @@ class AgencyPolicy
 {
     public function viewAny(User $user): bool
     {
+        // Admins may still read agencies (needed for planting request forms),
+        // but cannot manage the stakeholder registry.
         return true;
     }
 
@@ -19,26 +21,26 @@ class AgencyPolicy
 
     public function create(User $user): bool
     {
-        return true;
+        return ! $user->isAdmin();
     }
 
     public function update(User $user, Agency $agency): bool
     {
-        return true;
+        return ! $user->isAdmin();
     }
 
     public function delete(User $user, Agency $agency): bool
     {
-        return true;
+        return ! $user->isAdmin();
     }
 
     public function restore(User $user, Agency $agency): bool
     {
-        return true;
+        return ! $user->isAdmin();
     }
 
     public function forceDelete(User $user, Agency $agency): bool
     {
-        return true;
+        return ! $user->isAdmin();
     }
 }

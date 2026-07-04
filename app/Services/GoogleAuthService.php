@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Config;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\GoogleProvider;
 
 class GoogleAuthService
 {
@@ -16,14 +17,20 @@ class GoogleAuthService
             && ! empty(Config::get('services.google.client_secret'));
     }
 
+    private function provider(): GoogleProvider
+    {
+        /** @var GoogleProvider */
+        return Socialite::driver('google');
+    }
+
     public function getRedirectUrl(): string
     {
-        return Socialite::driver('google')->stateless()->redirect()->getTargetUrl();
+        return $this->provider()->stateless()->redirect()->getTargetUrl();
     }
 
     public function findOrCreateUser(): User
     {
-        $googleUser = Socialite::driver('google')->stateless()->user();
+        $googleUser = $this->provider()->stateless()->user();
 
         $user = User::where('google_id', $googleUser->getId())
             ->orWhere('email', $googleUser->getEmail())
