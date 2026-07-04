@@ -4,85 +4,65 @@
     <meta charset="utf-8">
     <title>MENRO Planting &amp; Monitoring Report</title>
     <style>
-        @page { margin: 24px 28px; }
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #1f2937; }
-        .header table { width: 100%; border-collapse: collapse; }
-        .header td { vertical-align: middle; padding: 0; }
-        .seal { width: 80px; text-align: center; }
-        .seal img { width: 64px; height: 64px; border-radius: 50%; }
+        @page { margin: 18px 24px; }
+        body { font-family: 'Times New Roman', Times, serif; font-size: 10px; color: #000000; }
+        /* Header laid out like the reference sheet: seal on the left, office
+         * text beside it, and the whole block centered on the page. */
+        .header-table { border-collapse: collapse; margin: 0 auto; }
+        .header-table td { vertical-align: middle; padding: 0; }
+        .seal { width: 64px; text-align: center; }
+        .seal img { width: 56px; height: 56px; border-radius: 50%; }
         .seal-placeholder {
-            display: inline-block; width: 60px; height: 60px; border-radius: 50%;
+            display: inline-block; width: 52px; height: 52px; border-radius: 50%;
             border: 2px dashed #94a3b8;
         }
-        .agency-block { text-align: center; }
+        .agency-block { text-align: left; padding-left: 10px; }
         .agency-block .republic { font-size: 10px; }
         .agency-block .province,
-        .agency-block .municipality { font-size: 11px; font-weight: bold; }
-        /*
-         * The original sheet uses a blackletter/old-English display font for
-         * "Municipal Environment and Natural Resources Office". No matching font
-         * file exists in this repo, and we will not fabricate/download one.
-         * Substituting a bold serif (dompdf built-in Times) as the closest safe
-         * approximation until a licensed font file is supplied.
-         */
-        .agency-block .office-title {
-            font-family: 'Times New Roman', Georgia, serif;
-            font-weight: bold;
-            font-size: 15px;
-            margin-top: 2px;
-        }
-        .banner {
-            /* dompdf does not reliably support CSS linear-gradient() across its
-             * renderer versions, so we use a solid fallback color approximating
-             * the screenshot's purple/violet banner instead of a gradient. */
-            background-color: #6d28d9;
-            color: #ffffff;
+        .agency-block .municipality { font-size: 10px; font-weight: bold; }
+        .agency-block .office-title { font-size: 12px; font-weight: bold; }
+        .report-title {
             text-align: center;
-            padding: 6px 0;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
-            margin-top: 8px;
+            margin-top: 6px;
+            text-transform: uppercase;
         }
-        table.report { width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 12px; }
+        table.report { width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 8px; }
         table.report th, table.report td {
-            border: 1px solid #94a3b8; padding: 3px 4px; font-size: 7px;
+            border: 1px solid #000000; padding: 2px 3px; font-size: 8px;
             word-wrap: break-word; overflow-wrap: break-word;
         }
-        table.report thead th { background-color: #dbeafe; text-align: center; font-weight: bold; }
+        table.report thead th { text-align: center; font-weight: bold; }
         table.report td { text-align: center; }
         table.report td.left { text-align: left; }
-        tr.total-row td { background-color: #fef08a; font-weight: bold; }
-        .meta { margin-top: 6px; font-size: 8px; color: #64748b; text-align: right; }
+        tr.total-row td { font-weight: bold; }
+        .meta { margin-top: 4px; font-size: 8px; color: #64748b; text-align: right; }
     </style>
 </head>
 <body>
     <div class="header">
-        <table>
+        <table class="header-table">
             <tr>
                 <td class="seal">
                     {{-- Falls back to a neutral placeholder if the seal file is ever missing. --}}
-                    @if($provinceSealDataUri)
+                    @if($menroSealDataUri)
+                        <img src="{{ $menroSealDataUri }}" alt="MENRO Seal">
+                    @elseif($provinceSealDataUri)
                         <img src="{{ $provinceSealDataUri }}" alt="Province Seal">
                     @else
                         <span class="seal-placeholder"></span>
                     @endif
                 </td>
                 <td class="agency-block">
+                    <div class="office-title">Municipal Environment and Natural Resources Office</div>
                     <div class="republic">Republic of the Philippines</div>
                     <div class="province">PROVINCE OF MISAMIS ORIENTAL</div>
                     <div class="municipality">MUNICIPALITY OF TAGOLOAN</div>
-                    <div class="office-title">Municipal Environment and Natural Resources Office</div>
-                </td>
-                <td class="seal">
-                    @if($menroSealDataUri)
-                        <img src="{{ $menroSealDataUri }}" alt="MENRO Seal">
-                    @else
-                        <span class="seal-placeholder"></span>
-                    @endif
                 </td>
             </tr>
         </table>
-        <div class="banner">PLANTING &amp; MONITORING REPORT</div>
+        <div class="report-title">Planting &amp; Monitoring Report</div>
     </div>
 
     <table class="report">
