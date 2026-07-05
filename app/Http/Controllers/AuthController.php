@@ -27,7 +27,11 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request): JsonResponse
     {
-        $defaultRole = Role::where('slug', 'user')->first();
+        // Every self-registered account becomes an Admin so it lands on the
+        // admin dashboard immediately. The role is fixed server-side (not
+        // chosen by the registrant) to avoid privilege-escalation; elevated
+        // Super Admin access is still granted only through user management.
+        $defaultRole = Role::where('slug', 'admin')->first();
 
         $user = User::create([
             'role_id' => $defaultRole?->id,

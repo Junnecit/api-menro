@@ -14,7 +14,7 @@ class RequestPolicy
 
     public function view(User $user, PlantingRequest $plantingRequest): bool
     {
-        return true;
+        return $this->owns($user, $plantingRequest);
     }
 
     public function create(User $user): bool
@@ -24,21 +24,30 @@ class RequestPolicy
 
     public function update(User $user, PlantingRequest $plantingRequest): bool
     {
-        return true;
+        return $this->owns($user, $plantingRequest);
     }
 
     public function delete(User $user, PlantingRequest $plantingRequest): bool
     {
-        return true;
+        return $this->owns($user, $plantingRequest);
     }
 
     public function restore(User $user, PlantingRequest $plantingRequest): bool
     {
-        return true;
+        return $this->owns($user, $plantingRequest);
     }
 
     public function forceDelete(User $user, PlantingRequest $plantingRequest): bool
     {
-        return true;
+        return $this->owns($user, $plantingRequest);
+    }
+
+    /**
+     * A user may act on a request only if they own it. Super Admins bypass the
+     * ownership check and can act on every account's requests.
+     */
+    private function owns(User $user, PlantingRequest $plantingRequest): bool
+    {
+        return $user->isSuperAdmin() || $plantingRequest->user_id === $user->id;
     }
 }

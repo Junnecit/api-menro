@@ -22,7 +22,9 @@ class StorePlantingRequestRequest extends FormRequest
             'barangay_code' => ['required', 'string', Rule::in(TagoloanLocation::barangayCodes())],
             'custom_address' => ['nullable', 'string', 'max:1000'],
             'location' => ['prohibited'],
-            'status' => ['required', Rule::in([
+            // Status is optional: admins submit without one (forced to Pending
+            // server-side) and only Super Admins may choose it on create.
+            'status' => ['nullable', Rule::in([
                 'Pending',
                 'Approved',
                 'Completed',

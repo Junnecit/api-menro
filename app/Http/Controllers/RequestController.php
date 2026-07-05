@@ -64,6 +64,17 @@ class RequestController extends Controller
             $data['request_no'] = $this->generateRequestNo();
         }
 
+        $user = $request->user();
+
+        // Stamp the creator so each account only sees the requests it owns.
+        $data['user_id'] = $user->id;
+
+        // Admins can only submit — a request always starts as Pending. Only a
+        // Super Admin may set a different status at creation time.
+        $data['status'] = $user->isSuperAdmin()
+            ? ($data['status'] ?? 'Pending')
+            : 'Pending';
+
         $plantingRequest = PlantingRequest::create($data);
 
         return response()->json([
@@ -87,7 +98,15 @@ class RequestController extends Controller
     {
         $this->authorize('update', $request);
 
-        $request->update(TagoloanLocation::applyBarangay($formRequest->validated()));
+        $data = TagoloanLocation::applyBarangay($formRequest->validated());
+
+        // Only a Super Admin may change a request's status (approve, reject,
+        // etc.). Admins can edit their own request details but not its status.
+        if (! $formRequest->user()->isSuperAdmin()) {
+            unset($data['status']);
+        }
+
+        $request->update($data);
 
         return response()->json([
             'success' => true,
@@ -138,6 +157,7 @@ class RequestController extends Controller
     private function filteredQuery(Request $request, Builder $query): Builder
     {
         $query = $query->with('agency')
+            ->ownedBy($request->user())
             ->orderByDesc('request_date')
             ->orderByDesc('id');
 
