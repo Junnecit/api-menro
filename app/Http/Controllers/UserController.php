@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserStatus;
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\UserApproved;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -140,7 +142,13 @@ class UserController extends Controller
             $data['agency_id'] = null;
         }
 
+        $wasPending = $user->status === UserStatus::Pending;
+
         $user->update($data);
+
+        if ($wasPending && $user->status === UserStatus::Active) {
+            $user->notify(new UserApproved);
+        }
 
         return response()->json([
             'success' => true,
@@ -197,7 +205,7 @@ class UserController extends Controller
         ]);
     }
 
-    private function filteredQuery(Request $request, $query)
+    private function filteredQuery(Request $request, \Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->with('role')
             ->visibleTo($request->user())
