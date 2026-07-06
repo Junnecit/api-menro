@@ -36,8 +36,9 @@ class Request extends Model
     }
 
     /**
-     * Limit the query to rows owned by the given user, unless they are a Super
-     * Admin — Super Admins see every account's requests.
+     * Limit the query to rows the given user owns. Super Admins see every
+     * account's requests; an admin sees their own plus all of their managed
+     * users'; a regular user sees only their own.
      */
     public function scopeOwnedBy($query, User $user)
     {
@@ -45,6 +46,6 @@ class Request extends Model
             return $query;
         }
 
-        return $query->where('user_id', $user->id);
+        return $query->whereIn('user_id', $user->visibleUserIds());
     }
 }

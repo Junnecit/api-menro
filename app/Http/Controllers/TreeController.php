@@ -19,6 +19,7 @@ class TreeController extends Controller
         $this->authorize('viewAny', Tree::class);
 
         $trees = Tree::with(self::RELATIONS)
+            ->ownedBy($request->user())
             ->status($request->query('status'))
             ->agency($request->integer('agency_id') ?: null)
             ->barangay($request->query('barangay'))

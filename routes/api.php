@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
+    Route::get('admins', [AuthController::class, 'admins']);
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
     Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:forgot-password');
     Route::post('reset-password', [AuthController::class, 'resetPassword']);
@@ -36,7 +37,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('profile/photo', [ProfileController::class, 'removePhoto']);
     Route::get('users/options', [UserController::class, 'options']);
 
-    Route::middleware('role:super-admin')->group(function () {
+    // User management is available to admins and super-admins. Ownership is
+    // enforced by UserPolicy/scopeVisibleTo: a plain admin only ever sees and
+    // acts on their own managed pool, while a super-admin bypasses and sees all.
+    Route::middleware('role:admin,super-admin')->group(function () {
         Route::get('roles', [RoleController::class, 'index']);
         Route::get('users/trash', [UserController::class, 'trash']);
         Route::post('users/{id}/restore', [UserController::class, 'restore']);

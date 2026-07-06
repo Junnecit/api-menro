@@ -14,7 +14,7 @@ class TreePolicy
 
     public function view(User $user, Tree $tree): bool
     {
-        return true;
+        return $this->owns($user, $tree);
     }
 
     public function create(User $user): bool
@@ -24,11 +24,22 @@ class TreePolicy
 
     public function update(User $user, Tree $tree): bool
     {
-        return $user->isAdminOrAbove() || $tree->recorded_by_id === $user->id;
+        return $this->owns($user, $tree);
     }
 
     public function delete(User $user, Tree $tree): bool
     {
-        return $user->isAdminOrAbove() || $tree->recorded_by_id === $user->id;
+        return $this->owns($user, $tree);
+    }
+
+    /**
+     * A user may act on a tree only if they own it. Super Admins bypass the
+     * ownership check entirely; an admin also owns every tree recorded by a
+     * managed user, while a regular user owns only the trees they recorded.
+     */
+    private function owns(User $user, Tree $tree): bool
+    {
+        return $user->isSuperAdmin()
+            || in_array($tree->recorded_by_id, $user->visibleUserIds(), true);
     }
 }

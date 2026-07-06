@@ -13,7 +13,7 @@ class UserPolicy
 
     public function view(User $user, User $model): bool
     {
-        return $user->isAdminOrAbove();
+        return $user->isAdminOrAbove() && $user->canManageUser($model);
     }
 
     public function create(User $user): bool
@@ -31,7 +31,7 @@ class UserPolicy
             return false;
         }
 
-        return true;
+        return $user->canManageUser($model);
     }
 
     public function delete(User $user, User $model): bool
@@ -48,7 +48,7 @@ class UserPolicy
             return false;
         }
 
-        return true;
+        return $user->canManageUser($model);
     }
 
     public function restore(User $user, User $model): bool
@@ -61,7 +61,7 @@ class UserPolicy
             return false;
         }
 
-        return true;
+        return $user->canManageUser($model);
     }
 
     public function forceDelete(User $user, User $model): bool

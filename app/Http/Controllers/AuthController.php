@@ -25,10 +25,55 @@ class AuthController extends Controller
 {
     public function __construct(private AuthService $authService) {}
 
+    /**
+     * Public list of active admins, for the mobile registration screen's
+     * "managing admin" picker. Only id/name are exposed — no auth required,
+     * since this is shown before a token exists.
+     */
+    public function admins(): JsonResponse
+    {
+        $admins = User::whereHas('role', fn ($q) => $q->where('slug', 'admin'))
+            ->where('status', UserStatus::Active)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $admins,
+        ]);
+    }
+
     public function register(RegisterRequest $request): JsonResponse
     {
-        // Every self-registered account becomes an Admin so it lands on the
-        // admin dashboard immediately. The role is fixed server-side (not
+        // Mobile (field-user) registration includes admin_id: the registrant
+        // picked a managing admin, so the account is created as a regular
+        // User and held as Pending until that admin approves it — no token
+        // is issued, so it cannot be used to log in until then.
+        if ($request->filled('admin_id')) {
+            $userRole = Role::where('slug', 'user')->first();
+
+            $user = User::create([
+                'role_id' => $userRole?->id,
+                'admin_id' => $request->admin_id,
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => $request->password,
+                'status' => UserStatus::Pending,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Registration successful. Your account is pending approval from your managing admin.',
+                'data' => [
+                    'user' => new UserResource($user->load(['role', 'admin'])),
+                    'token' => null,
+                    'pending' => true,
+                ],
+            ], 201);
+        }
+
+        // Every other self-registered account becomes an Admin so it lands on
+        // the admin dashboard immediately. The role is fixed server-side (not
         // chosen by the registrant) to avoid privilege-escalation; elevated
         // Super Admin access is still granted only through user management.
         $defaultRole = Role::where('slug', 'admin')->first();
@@ -49,6 +94,7 @@ class AuthController extends Controller
             'data' => [
                 'user' => new UserResource($user->load('role')),
                 'token' => $token,
+                'pending' => false,
             ],
         ], 201);
     }
@@ -68,9 +114,13 @@ class AuthController extends Controller
         if ($user->status !== UserStatus::Active) {
             Auth::logout();
 
+            $message = $user->status === UserStatus::Pending
+                ? 'Your account is awaiting approval from your managing admin.'
+                : 'Your account is not active.';
+
             return response()->json([
                 'success' => false,
-                'message' => 'Your account is not active.',
+                'message' => $message,
             ], 403);
         }
 

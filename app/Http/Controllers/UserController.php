@@ -51,12 +51,25 @@ class UserController extends Controller
             ], 403);
         }
 
-        $user = User::create($request->validated());
+        $data = $request->validated();
+
+        if ($role->slug === 'user') {
+            // A plain admin manages only their own pool, so every user they
+            // create is assigned to them; a Super Admin may pick any admin.
+            if ($request->user()->isAdmin()) {
+                $data['admin_id'] = $request->user()->id;
+            }
+        } else {
+            // Admins and Super Admins are not managed by anyone.
+            $data['admin_id'] = null;
+        }
+
+        $user = User::create($data);
 
         return response()->json([
             'success' => true,
             'message' => 'User created successfully.',
-            'data' => new UserResource($user->load('role')),
+            'data' => new UserResource($user->load(['role', 'admin'])),
         ], 201);
     }
 
@@ -66,7 +79,7 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => new UserResource($user->load('role')),
+            'data' => new UserResource($user->load(['role', 'admin'])),
         ]);
     }
 
@@ -90,12 +103,21 @@ class UserController extends Controller
             unset($data['password']);
         }
 
+        // A managing admin only makes sense for regular users. If this account
+        // is (or is becoming) an admin/super-admin, it cannot have a manager.
+        $targetRoleSlug = $request->filled('role_id')
+            ? Role::find($request->role_id)?->slug
+            : $user->role?->slug;
+        if ($targetRoleSlug !== 'user' && array_key_exists('admin_id', $data)) {
+            $data['admin_id'] = null;
+        }
+
         $user->update($data);
 
         return response()->json([
             'success' => true,
             'message' => 'User updated successfully.',
-            'data' => new UserResource($user->fresh()->load('role')),
+            'data' => new UserResource($user->fresh()->load(['role', 'admin'])),
         ]);
     }
 
@@ -122,7 +144,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'User restored successfully.',
-            'data' => new UserResource($user->fresh()->load('role')),
+            'data' => new UserResource($user->fresh()->load(['role', 'admin'])),
         ]);
     }
 
@@ -150,6 +172,7 @@ class UserController extends Controller
     private function filteredQuery(Request $request, $query)
     {
         return $query->with('role')
+            ->visibleTo($request->user())
             ->search($request->query('search'))
             ->roleSlug($request->query('role'))
             ->status($request->query('status'))

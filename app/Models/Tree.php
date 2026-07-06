@@ -66,6 +66,20 @@ class Tree extends Model
         return $this->hasMany(TreePhoto::class);
     }
 
+    /**
+     * Limit the query to the trees the given user owns. Super Admins see every
+     * tree; an admin sees trees recorded by themselves plus their managed
+     * users; a regular (mobile) user sees only the trees they recorded.
+     */
+    public function scopeOwnedBy($query, User $user)
+    {
+        if ($user->isSuperAdmin()) {
+            return $query;
+        }
+
+        return $query->whereIn('recorded_by_id', $user->visibleUserIds());
+    }
+
     public function scopeStatus($query, ?string $status)
     {
         if (! $status) {

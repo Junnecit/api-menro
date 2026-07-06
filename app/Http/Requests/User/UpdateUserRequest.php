@@ -3,6 +3,7 @@
 namespace App\Http\Requests\User;
 
 use App\Enums\UserStatus;
+use App\Rules\ManagerIsAdmin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -23,6 +24,7 @@ class UpdateUserRequest extends FormRequest
             'email' => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
             'password' => ['nullable', Password::defaults()],
             'role_id' => ['sometimes', 'required', 'exists:roles,id'],
+            'admin_id' => ['sometimes', 'nullable', 'integer', 'exists:users,id', new ManagerIsAdmin],
             'status' => ['sometimes', 'required', Rule::enum(UserStatus::class)],
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:500'],

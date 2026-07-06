@@ -20,6 +20,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $fillable = [
         'role_id',
+        'admin_id',
         'name',
         'email',
         'password',
@@ -53,6 +54,70 @@ class User extends Authenticatable implements MustVerifyEmail
     public function testItems(): HasMany
     {
         return $this->hasMany(TestItem::class);
+    }
+
+    /**
+     * The admin who manages this user.
+     */
+    public function admin(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'admin_id');
+    }
+
+    /**
+     * The users this admin manages (and whose records they own).
+     */
+    public function managedUsers(): HasMany
+    {
+        return $this->hasMany(User::class, 'admin_id');
+    }
+
+    /**
+     * The set of user ids whose records this user owns. An admin owns their own
+     * records plus every managed user's; everyone else owns only their own.
+     * Super Admins bypass ownership entirely, so this is not used for them.
+     */
+    public function visibleUserIds(): array
+    {
+        if ($this->isAdmin()) {
+            return $this->managedUsers()->pluck('id')->push($this->id)->all();
+        }
+
+        return [$this->id];
+    }
+
+    /**
+     * Whether this user may see/act on the given account. Super Admins see
+     * everyone; an admin sees themselves and the users they manage; a regular
+     * user sees only themselves. Checks admin_id directly so it holds for
+     * soft-deleted (trashed) accounts too.
+     */
+    public function canManageUser(User $model): bool
+    {
+        if ($this->isSuperAdmin() || $model->id === $this->id) {
+            return true;
+        }
+
+        return $this->isAdmin() && $model->admin_id === $this->id;
+    }
+
+    /**
+     * Limit a user query to the accounts the given user may see: all for a
+     * Super Admin; self + managed users for an admin; self only otherwise.
+     */
+    public function scopeVisibleTo($query, User $user)
+    {
+        if ($user->isSuperAdmin()) {
+            return $query;
+        }
+
+        if ($user->isAdmin()) {
+            return $query->where(function ($q) use ($user) {
+                $q->where('admin_id', $user->id)->orWhere('id', $user->id);
+            });
+        }
+
+        return $query->where('id', $user->id);
     }
 
     public function isSuperAdmin(): bool

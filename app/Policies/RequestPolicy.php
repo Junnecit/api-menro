@@ -44,10 +44,11 @@ class RequestPolicy
 
     /**
      * A user may act on a request only if they own it. Super Admins bypass the
-     * ownership check and can act on every account's requests.
+     * ownership check entirely; an admin also owns every managed user's request.
      */
     private function owns(User $user, PlantingRequest $plantingRequest): bool
     {
-        return $user->isSuperAdmin() || $plantingRequest->user_id === $user->id;
+        return $user->isSuperAdmin()
+            || in_array($plantingRequest->user_id, $user->visibleUserIds(), true);
     }
 }
