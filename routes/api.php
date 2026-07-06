@@ -51,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('test-items', TestItemController::class);
 
     Route::get('locations/barangays', [RequestController::class, 'barangays']);
+    Route::get('agencies/options', [AgencyController::class, 'options']);
     Route::get('agencies/trash', [AgencyController::class, 'trash']);
     Route::post('agencies/{id}/restore', [AgencyController::class, 'restore']);
     Route::delete('agencies/{id}/force', [AgencyController::class, 'forceDestroy']);

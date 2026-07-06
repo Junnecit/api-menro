@@ -27,6 +27,15 @@ class Agency extends Model
         'status',
     ];
 
+    /**
+     * The admin account that represents this stakeholder in the portal.
+     * At most one per agency (enforced by a unique constraint on users.agency_id).
+     */
+    public function admin()
+    {
+        return $this->hasOne(User::class, 'agency_id');
+    }
+
     public function requests()
     {
         return $this->hasMany(Request::class);

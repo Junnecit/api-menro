@@ -25,6 +25,7 @@ class UpdateUserRequest extends FormRequest
             'password' => ['nullable', Password::defaults()],
             'role_id' => ['sometimes', 'required', 'exists:roles,id'],
             'admin_id' => ['sometimes', 'nullable', 'integer', 'exists:users,id', new ManagerIsAdmin],
+            'agency_id' => ['sometimes', 'nullable', 'integer', 'exists:agencies,id', Rule::unique('users', 'agency_id')->ignore($userId)],
             'status' => ['sometimes', 'required', Rule::enum(UserStatus::class)],
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:500'],

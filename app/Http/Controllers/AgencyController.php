@@ -13,6 +13,19 @@ use Illuminate\Http\Request;
 
 class AgencyController extends Controller
 {
+    /**
+     * Lightweight id/name list for pickers (e.g. linking an admin account to
+     * the stakeholder they represent). No pagination, no policy gate — same
+     * pattern as UserController::options().
+     */
+    public function options(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => Agency::orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Agency::class);

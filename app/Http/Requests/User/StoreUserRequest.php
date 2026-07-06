@@ -23,6 +23,7 @@ class StoreUserRequest extends FormRequest
             'password' => ['required', Password::defaults()],
             'role_id' => ['required', 'exists:roles,id'],
             'admin_id' => ['nullable', 'integer', 'exists:users,id', new ManagerIsAdmin],
+            'agency_id' => ['nullable', 'integer', 'exists:agencies,id', Rule::unique('users', 'agency_id')],
             'status' => ['required', Rule::enum(UserStatus::class)],
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:500'],

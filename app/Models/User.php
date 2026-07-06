@@ -21,6 +21,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'role_id',
         'admin_id',
+        'agency_id',
         'name',
         'email',
         'password',
@@ -70,6 +71,15 @@ class User extends Authenticatable implements MustVerifyEmail
     public function managedUsers(): HasMany
     {
         return $this->hasMany(User::class, 'admin_id');
+    }
+
+    /**
+     * The stakeholder agency this admin account represents. Only set for
+     * `admin` role accounts; null for super-admins and regular users.
+     */
+    public function agency(): BelongsTo
+    {
+        return $this->belongsTo(Agency::class);
     }
 
     /**

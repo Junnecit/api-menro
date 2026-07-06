@@ -51,6 +51,15 @@ class UserController extends Controller
             ], 403);
         }
 
+        // Only a Super Admin manages the Admins pool; a plain admin manages
+        // only their own users.
+        if ($role->slug === 'admin' && ! $request->user()->isSuperAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot assign the Admin role.',
+            ], 403);
+        }
+
         $data = $request->validated();
 
         if ($role->slug === 'user') {
@@ -64,12 +73,17 @@ class UserController extends Controller
             $data['admin_id'] = null;
         }
 
+        // A stakeholder agency link only makes sense for admin accounts.
+        if ($role->slug !== 'admin') {
+            $data['agency_id'] = null;
+        }
+
         $user = User::create($data);
 
         return response()->json([
             'success' => true,
             'message' => 'User created successfully.',
-            'data' => new UserResource($user->load(['role', 'admin'])),
+            'data' => new UserResource($user->load(['role', 'admin', 'agency'])),
         ], 201);
     }
 
@@ -79,7 +93,7 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => new UserResource($user->load(['role', 'admin'])),
+            'data' => new UserResource($user->load(['role', 'admin', 'agency'])),
         ]);
     }
 
@@ -94,6 +108,15 @@ class UserController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'You cannot assign the Super Admin role.',
+                ], 403);
+            }
+
+            // Only a Super Admin manages the Admins pool; a plain admin
+            // manages only their own users.
+            if ($role->slug === 'admin' && ! $request->user()->isSuperAdmin()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You cannot assign the Admin role.',
                 ], 403);
             }
         }
@@ -112,12 +135,17 @@ class UserController extends Controller
             $data['admin_id'] = null;
         }
 
+        // A stakeholder agency link only makes sense for admin accounts.
+        if ($targetRoleSlug !== 'admin' && array_key_exists('agency_id', $data)) {
+            $data['agency_id'] = null;
+        }
+
         $user->update($data);
 
         return response()->json([
             'success' => true,
             'message' => 'User updated successfully.',
-            'data' => new UserResource($user->fresh()->load(['role', 'admin'])),
+            'data' => new UserResource($user->fresh()->load(['role', 'admin', 'agency'])),
         ]);
     }
 
@@ -144,7 +172,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'User restored successfully.',
-            'data' => new UserResource($user->fresh()->load(['role', 'admin'])),
+            'data' => new UserResource($user->fresh()->load(['role', 'admin', 'agency'])),
         ]);
     }
 
