@@ -18,6 +18,8 @@ class UserApproved extends Notification
             ->subject('Your account has been approved')
             ->greeting("Hi {$notifiable->name},")
             ->line('Your MENRO Tree Planting Monitoring account has been approved.')
-            ->line('You can now log in to the app using your email and password.');
+            ->line('You can now log in to the app using your email and password.')
+            ->action('Log In', env('FRONTEND_URL', 'http://localhost:5173'))
+            ->salutation('— MENRO Tagoloan Tree Planting Monitoring Team');
     }
 }
