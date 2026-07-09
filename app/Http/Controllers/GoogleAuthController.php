@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\InactiveGoogleAccountException;
+use App\Exceptions\UnauthorizedGoogleEmailException;
 use App\Services\AuthService;
 use App\Services\GoogleAuthService;
 use Illuminate\Http\JsonResponse;
@@ -35,18 +37,17 @@ class GoogleAuthController extends Controller
             ], 503);
         }
 
+        $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
+
         try {
             $user = $this->googleAuthService->findOrCreateUser();
             $token = $this->authService->createToken($user, 'google-auth-token');
-            $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
 
             return redirect("{$frontendUrl}/auth/google/callback?token={$token}");
+        } catch (UnauthorizedGoogleEmailException|InactiveGoogleAccountException $e) {
+            return redirect("{$frontendUrl}/auth/google/callback?error=".urlencode($e->getMessage()));
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Google authentication failed.',
-                'error' => config('app.debug') ? $e->getMessage() : null,
-            ], 500);
+            return redirect("{$frontendUrl}/auth/google/callback?error=".urlencode('Google authentication failed.'));
         }
     }
 }

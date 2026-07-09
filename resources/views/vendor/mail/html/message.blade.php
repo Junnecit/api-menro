@@ -2,7 +2,10 @@
 {{-- Header --}}
 <x-slot:header>
 <x-mail::header :url="config('app.url')">
-{{ config('app.name') }}
+{{-- Replaced with a cid: reference by App\Mail\EmbedsMenroLogo before sending, so
+     the logo renders in mail clients (Gmail, Outlook, etc.) that won't fetch a
+     localhost/private-network image URL or render an inline base64 data: URI. --}}
+<img src="MENRO_LOGO_CID" class="logo" alt="{{ config('app.name') }}">
 </x-mail::header>
 </x-slot:header>
 

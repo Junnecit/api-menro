@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\UserStatus;
+use App\Exceptions\InactiveGoogleAccountException;
+use App\Exceptions\UnauthorizedGoogleEmailException;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Config;
@@ -19,8 +21,10 @@ class GoogleAuthService
 
     private function provider(): GoogleProvider
     {
-        /** @var GoogleProvider */
-        return Socialite::driver('google');
+        /** @var GoogleProvider $driver */
+        $driver = Socialite::driver('google');
+
+        return $driver;
     }
 
     public function getRedirectUrl(): string
@@ -32,11 +36,19 @@ class GoogleAuthService
     {
         $googleUser = $this->provider()->stateless()->user();
 
+        if (! $this->isEmailAuthorized($googleUser->getEmail())) {
+            throw new UnauthorizedGoogleEmailException($googleUser->getEmail());
+        }
+
         $user = User::where('google_id', $googleUser->getId())
             ->orWhere('email', $googleUser->getEmail())
             ->first();
 
         if ($user) {
+            if ($user->status !== UserStatus::Active) {
+                throw new InactiveGoogleAccountException($user->status);
+            }
+
             if (! $user->google_id) {
                 $user->update(['google_id' => $googleUser->getId()]);
             }
@@ -54,5 +66,25 @@ class GoogleAuthService
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
         ]);
+    }
+
+    private function isEmailAuthorized(string $email): bool
+    {
+        $allowedEmails = Config::get('services.google.allowed_emails', []);
+        $allowedDomains = Config::get('services.google.allowed_domains', []);
+
+        if (empty($allowedEmails) && empty($allowedDomains)) {
+            return true;
+        }
+
+        $email = strtolower($email);
+
+        if (in_array($email, $allowedEmails, true)) {
+            return true;
+        }
+
+        $domain = substr(strrchr($email, '@'), 1) ?: '';
+
+        return in_array($domain, $allowedDomains, true);
     }
 }

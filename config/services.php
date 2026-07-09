@@ -39,6 +39,19 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/auth/google/callback'),
+
+        // New Google sign-ins are only allowed to create an account when the
+        // email is in this list or falls under one of the allowed domains.
+        // Comma-separated in .env. Leave both empty to allow any Google email.
+        // Existing users already in the database can still sign in regardless.
+        'allowed_emails' => array_filter(array_map(
+            fn ($email) => strtolower(trim($email)),
+            explode(',', env('GOOGLE_ALLOWED_EMAILS', ''))
+        )),
+        'allowed_domains' => array_filter(array_map(
+            fn ($domain) => strtolower(trim($domain, " \t\n\r\0\x0B@")),
+            explode(',', env('GOOGLE_ALLOWED_DOMAINS', ''))
+        )),
     ],
 
 ];
