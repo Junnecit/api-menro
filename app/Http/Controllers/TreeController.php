@@ -14,11 +14,14 @@ class TreeController extends Controller
 {
     private const RELATIONS = ['agency', 'inspector', 'recordedBy', 'updatedBy', 'photos'];
 
+    // Photos are only needed when a single tree is opened, not for the map/list view.
+    private const LIST_RELATIONS = ['agency', 'inspector', 'recordedBy', 'updatedBy'];
+
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Tree::class);
 
-        $trees = Tree::with(self::RELATIONS)
+        $trees = Tree::with(self::LIST_RELATIONS)
             ->ownedBy($request->user())
             ->status($request->query('status'))
             ->agency($request->integer('agency_id') ?: null)
