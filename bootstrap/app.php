@@ -16,6 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
         ]);
+
+        // The ngrok tunnel forwards requests to this local server, so without
+        // trusting it as a proxy, Laravel sees every request (from every
+        // device, on every network) as coming from 127.0.0.1 instead of the
+        // real client IP. That collapses IP-keyed rate limits (e.g. login
+        // throttling) into one shared bucket across all devices.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
