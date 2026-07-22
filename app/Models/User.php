@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\UserStatus;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -115,7 +116,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * Limit a user query to the accounts the given user may see: all for a
      * Super Admin; self + managed users for an admin; self only otherwise.
      */
-    public function scopeVisibleTo($query, User $user)
+    public function scopeVisibleTo(Builder $query, User $user): Builder
     {
         if ($user->isSuperAdmin()) {
             return $query;
@@ -145,7 +146,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role?->isAdminOrAbove() ?? false;
     }
 
-    public function scopeSearch($query, ?string $search)
+    public function scopeSearch(Builder $query, ?string $search): Builder
     {
         if (! $search) {
             return $query;
@@ -157,7 +158,7 @@ class User extends Authenticatable implements MustVerifyEmail
         });
     }
 
-    public function scopeRoleSlug($query, ?string $roleSlug)
+    public function scopeRoleSlug(Builder $query, ?string $roleSlug): Builder
     {
         if (! $roleSlug) {
             return $query;
@@ -166,7 +167,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $query->whereHas('role', fn ($q) => $q->where('slug', $roleSlug));
     }
 
-    public function scopeStatus($query, ?string $status)
+    public function scopeStatus(Builder $query, ?string $status): Builder
     {
         if (! $status) {
             return $query;

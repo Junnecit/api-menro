@@ -99,9 +99,9 @@
             @forelse($records as $record)
                 <tr>
                     <td>{{ optional($record->request?->request_date)->format('m/d/Y') }}</td>
-                    <td class="left">{{ $record->request?->agency?->name ?? $record->request?->requester_name ?? '—' }}</td>
-                    <td class="left">{{ $record->request?->location }}</td>
-                    <td class="left">{{ $record->seedling_type }}</td>
+                    <td class="center">{{ $record->request?->agency?->name ?? $record->request?->requester_name ?? '—' }}</td>
+                    <td class="center">{{ $record->request?->location }}</td>
+                    <td class="center">{{ $record->seedling_type }}</td>
                     <td>{{ optional($record->date_monitoring)->format('m/d/Y') }}</td>
                     <td>{{ $record->seedlings_planted }}</td>
                     <td>{{ $record->replanted_count }}</td>
