@@ -68,8 +68,11 @@ class Tree extends Model
 
     /**
      * Limit the query to the trees the given user owns. Super Admins see every
-     * tree; an admin sees trees recorded by themselves plus their managed
-     * users; a regular (mobile) user sees only the trees they recorded.
+     * tree. An admin sees trees recorded by themselves plus their managed
+     * users, and — since an admin account represents a stakeholder agency —
+     * every tree tagged with that agency, keeping each agency's records
+     * partitioned from the others'. A regular (mobile) user sees only the
+     * trees they recorded.
      */
     public function scopeOwnedBy($query, User $user)
     {
@@ -77,7 +80,16 @@ class Tree extends Model
             return $query;
         }
 
-        return $query->whereIn('recorded_by_id', $user->visibleUserIds());
+        $ownedIds = $user->visibleUserIds();
+
+        if ($user->isAdmin() && $user->agency_id) {
+            return $query->where(function ($q) use ($ownedIds, $user) {
+                $q->whereIn('recorded_by_id', $ownedIds)
+                    ->orWhere('agency_id', $user->agency_id);
+            });
+        }
+
+        return $query->whereIn('recorded_by_id', $ownedIds);
     }
 
     public function scopeStatus($query, ?string $status)

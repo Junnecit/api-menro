@@ -207,7 +207,9 @@ class UserController extends Controller
 
     private function filteredQuery(Request $request, \Illuminate\Database\Eloquent\Builder $query)
     {
-        return $query->with('role')
+        // admin + agency power the Ownership column in the web user table:
+        // who manages a field user, and which agency an admin represents.
+        return $query->with(['role', 'admin:id,name', 'agency:id,name'])
             ->visibleTo($request->user())
             ->search($request->query('search'))
             ->roleSlug($request->query('role'))
