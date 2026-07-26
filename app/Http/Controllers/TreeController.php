@@ -21,7 +21,15 @@ class TreeController extends Controller
     {
         $this->authorize('viewAny', Tree::class);
 
-        $trees = Tree::with(self::LIST_RELATIONS)
+        // Photos are omitted from the list by default (the web map lazy-fetches
+        // them per popup). The mobile app renders thumbnails in its Home/Tree
+        // List, so it opts in with ?with_photos=1 to get them eagerly.
+        $relations = self::LIST_RELATIONS;
+        if ($request->boolean('with_photos')) {
+            $relations[] = 'photos';
+        }
+
+        $trees = Tree::with($relations)
             ->ownedBy($request->user())
             ->status($request->query('status'))
             ->agency($request->integer('agency_id') ?: null)
