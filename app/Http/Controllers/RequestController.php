@@ -6,6 +6,7 @@ use App\Http\Requests\PlantingRequest\StorePlantingRequestRequest;
 use App\Http\Requests\PlantingRequest\UpdatePlantingRequestRequest;
 use App\Http\Resources\RequestResource;
 use App\Models\Request as PlantingRequest;
+use App\Services\PlantingRequestDocumentService;
 use App\Support\TagoloanLocation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +14,8 @@ use Illuminate\Http\Request;
 
 class RequestController extends Controller
 {
+    public function __construct(private PlantingRequestDocumentService $documentService) {}
+
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', PlantingRequest::class);
@@ -59,7 +62,7 @@ class RequestController extends Controller
     {
         $this->authorize('create', PlantingRequest::class);
 
-        $data = TagoloanLocation::applyBarangay($request->validated());
+        $data = TagoloanLocation::applyBarangay($request->safe()->except('document'));
         if (empty($data['request_no'])) {
             $data['request_no'] = $this->generateRequestNo();
         }
@@ -75,12 +78,21 @@ class RequestController extends Controller
             ? ($data['status'] ?? 'Pending')
             : 'Pending';
 
+        $data['request_date'] = $data['request_date'] ?? now()->toDateString();
+
+        // Document-only submissions do not collect barangay in the form; details
+        // live in the uploaded file until a reviewer fills them in later.
+        if (empty($data['location'])) {
+            $data['location'] = 'See attached document';
+        }
+
         $plantingRequest = PlantingRequest::create($data);
+        $this->documentService->store($plantingRequest, $request->file('document'));
 
         return response()->json([
             'success' => true,
             'message' => 'Planting request created successfully.',
-            'data' => new RequestResource($plantingRequest->load('agency')),
+            'data' => new RequestResource($plantingRequest->fresh()->load('agency')),
         ], 201);
     }
 
@@ -98,7 +110,7 @@ class RequestController extends Controller
     {
         $this->authorize('update', $request);
 
-        $data = TagoloanLocation::applyBarangay($formRequest->validated());
+        $data = TagoloanLocation::applyBarangay($formRequest->safe()->except('document'));
 
         // Only a Super Admin may change a request's status (approve, reject,
         // etc.). Admins can edit their own request details but not its status.
@@ -106,7 +118,13 @@ class RequestController extends Controller
             unset($data['status']);
         }
 
-        $request->update($data);
+        if (! empty($data)) {
+            $request->update($data);
+        }
+
+        if ($formRequest->hasFile('document')) {
+            $this->documentService->store($request, $formRequest->file('document'));
+        }
 
         return response()->json([
             'success' => true,
@@ -146,6 +164,7 @@ class RequestController extends Controller
         $plantingRequest = PlantingRequest::onlyTrashed()->findOrFail($id);
         $this->authorize('forceDelete', $plantingRequest);
 
+        $this->documentService->deleteFile($plantingRequest);
         $plantingRequest->forceDelete();
 
         return response()->json([
@@ -168,6 +187,7 @@ class RequestController extends Controller
                     ->orWhere('location', 'like', "%{$search}%")
                     ->orWhere('requester_name', 'like', "%{$search}%")
                     ->orWhere('custom_address', 'like', "%{$search}%")
+                    ->orWhere('document_name', 'like', "%{$search}%")
                     ->orWhereHas('agency', fn ($agencyQuery) => $agencyQuery->where('name', 'like', "%{$search}%"));
             });
         }

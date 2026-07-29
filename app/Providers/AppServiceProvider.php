@@ -5,12 +5,15 @@ namespace App\Providers;
 use App\Mail\EmbedsMenroLogo;
 use App\Models\Agency;
 use App\Models\PlantingMonitoring;
+use App\Models\ReportFile;
+use App\Models\ReportFolder;
 use App\Models\Request as PlantingRequestModel;
 use App\Models\TestItem;
 use App\Models\Tree;
 use App\Models\User;
 use App\Policies\AgencyPolicy;
 use App\Policies\PlantingMonitoringPolicy;
+use App\Policies\ReportCenterPolicy;
 use App\Policies\RequestPolicy;
 use App\Policies\TestItemPolicy;
 use App\Policies\TreePolicy;
@@ -38,6 +41,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(TestItem::class, TestItemPolicy::class);
         Gate::policy(Tree::class, TreePolicy::class);
         Gate::policy(PlantingMonitoring::class, PlantingMonitoringPolicy::class);
+        Gate::policy(ReportFolder::class, ReportCenterPolicy::class);
+        Gate::policy(ReportFile::class, ReportCenterPolicy::class);
 
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by($request->input('email').'|'.$request->ip());

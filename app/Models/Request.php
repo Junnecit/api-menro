@@ -17,8 +17,11 @@ class Request extends Model
         'barangay_code',
         'location',
         'custom_address',
+        'document_path',
+        'document_name',
+        'document_mime',
         'status',
-        'request_date'
+        'request_date',
     ];
 
     protected $casts = [

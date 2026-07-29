@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\PlantingMonitoringController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportCenterController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TestItemController;
@@ -59,6 +60,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('requests/trash', [RequestController::class, 'trash']);
     Route::post('requests/{id}/restore', [RequestController::class, 'restore']);
     Route::delete('requests/{id}/force', [RequestController::class, 'forceDestroy']);
+    // Multipart document replace (browsers cannot attach files to PUT reliably).
+    Route::post('requests/{request}/document', [RequestController::class, 'update']);
     Route::apiResource('requests', RequestController::class);
     Route::get('planting-monitorings/trash', [PlantingMonitoringController::class, 'trash']);
     Route::post('planting-monitorings/{id}/restore', [PlantingMonitoringController::class, 'restore']);
@@ -67,4 +70,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('reports/planting-monitoring/pdf', [PlantingMonitoringController::class, 'exportPdf']);
     Route::get('dashboard/stats', [DashboardController::class, 'stats']);
     Route::apiResource('trees', TreeController::class);
+
+    // Report Center file manager
+    Route::get('report-center/browse', [ReportCenterController::class, 'browse']);
+    Route::post('report-center/sync-agencies', [ReportCenterController::class, 'syncAgencyFolders']);
+    Route::post('report-center/folders', [ReportCenterController::class, 'storeFolder']);
+    Route::put('report-center/folders/{report_folder}', [ReportCenterController::class, 'updateFolder']);
+    Route::delete('report-center/folders/{report_folder}', [ReportCenterController::class, 'destroyFolder']);
+    Route::post('report-center/folders/{id}/restore', [ReportCenterController::class, 'restoreFolder']);
+    Route::delete('report-center/folders/{id}/force', [ReportCenterController::class, 'forceDestroyFolder']);
+    Route::post('report-center/files', [ReportCenterController::class, 'storeFile']);
+    Route::post('report-center/files/from-monitoring-pdf', [ReportCenterController::class, 'saveMonitoringPdf']);
+    Route::put('report-center/files/{report_file}', [ReportCenterController::class, 'updateFile']);
+    Route::delete('report-center/files/{report_file}', [ReportCenterController::class, 'destroyFile']);
+    Route::post('report-center/files/{id}/restore', [ReportCenterController::class, 'restoreFile']);
+    Route::delete('report-center/files/{id}/force', [ReportCenterController::class, 'forceDestroyFile']);
+    Route::get('report-center/files/{report_file}/download', [ReportCenterController::class, 'downloadFile']);
 });

@@ -9,6 +9,10 @@ class RequestResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $documentUrl = $this->document_path
+            ? $request->getSchemeAndHttpHost().'/storage/'.$this->document_path
+            : null;
+
         return [
             'id' => $this->id,
             'request_no' => $this->request_no,
@@ -18,6 +22,9 @@ class RequestResource extends JsonResource
             'barangay_code' => $this->barangay_code,
             'location' => $this->location,
             'custom_address' => $this->custom_address,
+            'document_url' => $documentUrl,
+            'document_name' => $this->document_name,
+            'document_mime' => $this->document_mime,
             'status' => $this->status,
             'request_date' => $this->request_date?->toDateString(),
             'created_at' => $this->created_at?->toISOString(),
