@@ -16,6 +16,18 @@ class RequestResource extends JsonResource
         return [
             'id' => $this->id,
             'request_no' => $this->request_no,
+            'user_id' => $this->user_id,
+            'submitted_by' => $this->whenLoaded('user', function () {
+                if (! $this->user) {
+                    return null;
+                }
+
+                return [
+                    'id' => $this->user->id,
+                    'name' => $this->user->name,
+                    'email' => $this->user->email,
+                ];
+            }),
             'agency' => new AgencyResource($this->whenLoaded('agency')),
             'agency_id' => $this->agency_id,
             'requester_name' => $this->requester_name,

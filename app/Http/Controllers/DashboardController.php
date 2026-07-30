@@ -27,7 +27,7 @@ class DashboardController extends Controller
                 'agencies_count' => Agency::count(),
                 'recent_requests' => RequestResource::collection(
                     PlantingRequest::ownedBy($user)
-                        ->with('agency')
+                        ->with(['agency', 'user'])
                         ->orderByDesc('request_date')
                         ->orderByDesc('id')
                         ->limit(5)

@@ -92,7 +92,7 @@ class RequestController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Planting request created successfully.',
-            'data' => new RequestResource($plantingRequest->fresh()->load('agency')),
+            'data' => new RequestResource($plantingRequest->fresh()->load(['agency', 'user'])),
         ], 201);
     }
 
@@ -102,7 +102,7 @@ class RequestController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => new RequestResource($request->load('agency')),
+            'data' => new RequestResource($request->load(['agency', 'user'])),
         ]);
     }
 
@@ -129,7 +129,7 @@ class RequestController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Planting request updated successfully.',
-            'data' => new RequestResource($request->fresh()->load('agency')),
+            'data' => new RequestResource($request->fresh()->load(['agency', 'user'])),
         ]);
     }
 
@@ -155,7 +155,7 @@ class RequestController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Planting request restored successfully.',
-            'data' => new RequestResource($plantingRequest->fresh()->load('agency')),
+            'data' => new RequestResource($plantingRequest->fresh()->load(['agency', 'user'])),
         ]);
     }
 
@@ -175,7 +175,7 @@ class RequestController extends Controller
 
     private function filteredQuery(Request $request, Builder $query): Builder
     {
-        $query = $query->with('agency')
+        $query = $query->with(['agency', 'user'])
             ->ownedBy($request->user())
             ->orderByDesc('request_date')
             ->orderByDesc('id');
@@ -188,7 +188,11 @@ class RequestController extends Controller
                     ->orWhere('requester_name', 'like', "%{$search}%")
                     ->orWhere('custom_address', 'like', "%{$search}%")
                     ->orWhere('document_name', 'like', "%{$search}%")
-                    ->orWhereHas('agency', fn ($agencyQuery) => $agencyQuery->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('agency', fn ($agencyQuery) => $agencyQuery->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
             });
         }
 
