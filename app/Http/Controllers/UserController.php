@@ -14,11 +14,21 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function options(): JsonResponse
+    public function options(Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        $query = User::query()->orderBy('name');
+
+        // Inspector picker must stay inside the caller's agency pool so field
+        // users never see accounts from other stakeholder agencies.
+        if (! $user->isSuperAdmin()) {
+            $query->whereIn('id', $user->agencyPoolUserIds());
+        }
+
         return response()->json([
             'success' => true,
-            'data' => User::orderBy('name')->get(['id', 'name']),
+            'data' => $query->get(['id', 'name']),
         ]);
     }
 

@@ -14,6 +14,8 @@ class Request extends Model
         'request_no',
         'agency_id',
         'requester_name',
+        'project_name',
+        'target_trees',
         'barangay_code',
         'location',
         'custom_address',
@@ -25,7 +27,8 @@ class Request extends Model
     ];
 
     protected $casts = [
-        'request_date' => 'date'
+        'request_date' => 'date',
+        'target_trees' => 'integer',
     ];
 
     public function agency()
@@ -36,6 +39,19 @@ class Request extends Model
     public function user()
     {
         return $this->belongsTo(User::class)->withTrashed();
+    }
+
+    public function trees()
+    {
+        return $this->hasMany(Tree::class, 'request_id');
+    }
+
+    /**
+     * Statuses that allow mobile field users to register trees against the request.
+     */
+    public function isPlantable(): bool
+    {
+        return in_array($this->status, ['Approved', 'In Progress'], true);
     }
 
     /**

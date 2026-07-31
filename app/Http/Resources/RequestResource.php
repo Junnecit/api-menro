@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\TagoloanLocation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -11,6 +12,10 @@ class RequestResource extends JsonResource
     {
         $documentUrl = $this->document_path
             ? $request->getSchemeAndHttpHost().'/storage/'.$this->document_path
+            : null;
+
+        $barangayName = $this->barangay_code
+            ? TagoloanLocation::barangayName($this->barangay_code)
             : null;
 
         return [
@@ -31,7 +36,12 @@ class RequestResource extends JsonResource
             'agency' => new AgencyResource($this->whenLoaded('agency')),
             'agency_id' => $this->agency_id,
             'requester_name' => $this->requester_name,
+            'project_name' => $this->project_name,
+            'target_trees' => $this->target_trees,
             'barangay_code' => $this->barangay_code,
+            'barangay_name' => $barangayName,
+            'municipality' => 'Tagoloan',
+            'province' => 'Misamis Oriental',
             'location' => $this->location,
             'custom_address' => $this->custom_address,
             'document_url' => $documentUrl,

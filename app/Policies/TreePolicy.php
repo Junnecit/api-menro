@@ -35,9 +35,9 @@ class TreePolicy
     /**
      * A user may act on a tree only if they own it. Super Admins bypass the
      * ownership check entirely. An admin owns every tree recorded by a managed
-     * user, plus — because an admin account represents a stakeholder agency —
-     * every tree tagged with their agency. A regular user owns only the trees
-     * they recorded. Must stay in sync with Tree::scopeOwnedBy.
+     * user, plus every tree tagged with their agency. A managed field user may
+     * view/edit trees in their admin's agency pool. Unassigned users own only
+     * trees they recorded. Must stay in sync with Tree::scopeOwnedBy.
      */
     private function owns(User $user, Tree $tree): bool
     {
@@ -45,12 +45,12 @@ class TreePolicy
             return true;
         }
 
-        if (in_array($tree->recorded_by_id, $user->visibleUserIds(), true)) {
+        if (in_array($tree->recorded_by_id, $user->agencyPoolUserIds(), true)) {
             return true;
         }
 
-        return $user->isAdmin()
-            && $user->agency_id !== null
-            && $tree->agency_id === $user->agency_id;
+        $agencyId = $user->effectiveAgencyId();
+
+        return $agencyId !== null && $tree->agency_id === $agencyId;
     }
 }

@@ -98,6 +98,50 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * User ids in this account's stakeholder pool (for read/sync scopes).
+     * Admins: self + managed users. Field users under an admin: that admin's
+     * pool. Unassigned users: self only. Super Admins should not call this —
+     * they bypass pool filters entirely.
+     *
+     * @return list<int>
+     */
+    public function agencyPoolUserIds(): array
+    {
+        if ($this->isAdmin()) {
+            return $this->visibleUserIds();
+        }
+
+        if ($this->admin_id) {
+            $admin = $this->relationLoaded('admin') ? $this->admin : $this->admin()->first();
+
+            if ($admin) {
+                return $admin->visibleUserIds();
+            }
+        }
+
+        return [$this->id];
+    }
+
+    /**
+     * Stakeholder agency this account operates under. Admins carry agency_id
+     * directly; managed field users inherit it from their admin.
+     */
+    public function effectiveAgencyId(): ?int
+    {
+        if ($this->agency_id) {
+            return (int) $this->agency_id;
+        }
+
+        if ($this->admin_id) {
+            $admin = $this->relationLoaded('admin') ? $this->admin : $this->admin()->first();
+
+            return $admin?->agency_id ? (int) $admin->agency_id : null;
+        }
+
+        return null;
+    }
+
+    /**
      * Whether this user may see/act on the given account. Super Admins see
      * everyone; an admin sees themselves and the users they manage; a regular
      * user sees only themselves. Checks admin_id directly so it holds for

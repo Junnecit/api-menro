@@ -3,8 +3,10 @@
 namespace App\Http\Requests\Tree;
 
 use App\Enums\TreeStatus;
+use App\Models\Request as PlantingRequest;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreTreeRequest extends FormRequest
 {
@@ -17,6 +19,7 @@ class StoreTreeRequest extends FormRequest
     {
         return [
             'client_uuid' => ['nullable', 'uuid'],
+            'request_id' => ['required', 'integer', 'exists:requests,id'],
             'species' => ['required', 'string', 'max:255'],
             'common_name' => ['nullable', 'string', 'max:255'],
             'status' => ['required', Rule::enum(TreeStatus::class)],
@@ -32,6 +35,36 @@ class StoreTreeRequest extends FormRequest
             'notes' => ['nullable', 'string'],
             'photos' => ['nullable', 'array', 'max:6'],
             'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            if ($validator->errors()->has('request_id')) {
+                return;
+            }
+
+            $plantingRequest = PlantingRequest::query()->find($this->integer('request_id'));
+
+            if (! $plantingRequest) {
+                return;
+            }
+
+            if (! $plantingRequest->isPlantable()) {
+                $validator->errors()->add(
+                    'request_id',
+                    'Trees can only be registered against Approved or In Progress planting requests.'
+                );
+            }
+        });
+    }
+
+    public function messages(): array
+    {
+        return [
+            'request_id.required' => 'Please select an approved planting request.',
+            'request_id.exists' => 'The selected planting request is invalid.',
         ];
     }
 }

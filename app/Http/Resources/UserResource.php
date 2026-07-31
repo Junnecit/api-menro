@@ -17,6 +17,8 @@ class UserResource extends JsonResource
             'admin_id' => $this->admin_id,
             'admin' => new UserResource($this->whenLoaded('admin')),
             'agency_id' => $this->agency_id,
+            // Field users inherit agency from their managing admin.
+            'effective_agency_id' => $this->effectiveAgencyId(),
             'agency' => new AgencyResource($this->whenLoaded('agency')),
             'status' => $this->status?->value ?? $this->status,
             'phone' => $this->phone,

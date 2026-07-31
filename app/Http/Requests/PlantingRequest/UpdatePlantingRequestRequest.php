@@ -33,7 +33,9 @@ class UpdatePlantingRequestRequest extends FormRequest
             ],
             'agency_id' => ['nullable', 'integer', 'exists:agencies,id'],
             'requester_name' => ['nullable', 'string', 'max:255'],
-            'barangay_code' => ['nullable', 'string', Rule::in(TagoloanLocation::barangayCodes())],
+            'project_name' => ['sometimes', 'required', 'string', 'max:255'],
+            'target_trees' => ['sometimes', 'required', 'integer', 'min:1'],
+            'barangay_code' => ['sometimes', 'required', 'string', Rule::in(TagoloanLocation::barangayCodes())],
             'custom_address' => ['nullable', 'string', 'max:1000'],
             'location' => ['prohibited'],
             'status' => ['sometimes', 'required', Rule::in([
@@ -52,6 +54,10 @@ class UpdatePlantingRequestRequest extends FormRequest
         return [
             'document.mimes' => 'The document must be a PDF, DOC, or DOCX file.',
             'document.max' => 'The document may not be greater than 10 MB.',
+            'project_name.required' => 'Please enter a project name.',
+            'target_trees.required' => 'Please enter the target number of trees.',
+            'target_trees.min' => 'Target trees must be at least 1.',
+            'barangay_code.required' => 'Please select a barangay.',
         ];
     }
 }

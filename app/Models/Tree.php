@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Tree extends Model
 {
     protected $fillable = [
+        'request_id',
         'tree_code',
         'client_uuid',
         'species',
@@ -41,6 +42,11 @@ class Tree extends Model
         ];
     }
 
+    public function plantingRequest(): BelongsTo
+    {
+        return $this->belongsTo(Request::class, 'request_id');
+    }
+
     public function agency(): BelongsTo
     {
         return $this->belongsTo(Agency::class);
@@ -67,12 +73,11 @@ class Tree extends Model
     }
 
     /**
-     * Limit the query to the trees the given user owns. Super Admins see every
-     * tree. An admin sees trees recorded by themselves plus their managed
-     * users, and — since an admin account represents a stakeholder agency —
-     * every tree tagged with that agency, keeping each agency's records
-     * partitioned from the others'. A regular (mobile) user sees only the
-     * trees they recorded.
+     * Limit the query to the trees the given user may see. Super Admins see
+     * every tree. An admin (and their managed field users) see trees recorded
+     * in their agency pool, plus every tree tagged with that agency — keeping
+     * each stakeholder agency partitioned from the others'. Unassigned
+     * regular users see only the trees they recorded.
      */
     public function scopeOwnedBy($query, User $user)
     {
@@ -80,16 +85,20 @@ class Tree extends Model
             return $query;
         }
 
-        $ownedIds = $user->visibleUserIds();
+        $poolIds = $user->agencyPoolUserIds();
+        $agencyId = $user->effectiveAgencyId();
 
-        if ($user->isAdmin() && $user->agency_id) {
-            return $query->where(function ($q) use ($ownedIds, $user) {
-                $q->whereIn('recorded_by_id', $ownedIds)
-                    ->orWhere('agency_id', $user->agency_id);
+        if ($agencyId || $user->isAdmin() || $user->admin_id) {
+            return $query->where(function ($q) use ($poolIds, $agencyId) {
+                $q->whereIn('recorded_by_id', $poolIds);
+
+                if ($agencyId) {
+                    $q->orWhere('agency_id', $agencyId);
+                }
             });
         }
 
-        return $query->whereIn('recorded_by_id', $ownedIds);
+        return $query->whereIn('recorded_by_id', $poolIds);
     }
 
     public function scopeStatus($query, ?string $status)

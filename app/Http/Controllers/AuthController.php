@@ -152,7 +152,9 @@ class AuthController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => new UserResource($request->user()->load('role')),
+            'data' => new UserResource(
+                $request->user()->load(['role', 'admin.agency', 'agency'])
+            ),
         ]);
     }
 

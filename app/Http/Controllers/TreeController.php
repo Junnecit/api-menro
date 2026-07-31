@@ -5,17 +5,19 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Tree\StoreTreeRequest;
 use App\Http\Requests\Tree\UpdateTreeRequest;
 use App\Http\Resources\TreeResource;
+use App\Models\Request as PlantingRequest;
 use App\Models\Tree;
+use App\Support\TagoloanLocation;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TreeController extends Controller
 {
-    private const RELATIONS = ['agency', 'inspector', 'recordedBy', 'updatedBy', 'photos'];
+    private const RELATIONS = ['agency', 'inspector', 'recordedBy', 'updatedBy', 'photos', 'plantingRequest'];
 
     // Photos are only needed when a single tree is opened, not for the map/list view.
-    private const LIST_RELATIONS = ['agency', 'inspector', 'recordedBy', 'updatedBy'];
+    private const LIST_RELATIONS = ['agency', 'inspector', 'recordedBy', 'updatedBy', 'plantingRequest'];
 
     public function index(Request $request): JsonResponse
     {
@@ -61,8 +63,31 @@ class TreeController extends Controller
         }
 
         try {
+            $payload = $request->safe()->except('photos');
+            $plantingRequest = PlantingRequest::query()->findOrFail($request->integer('request_id'));
+
+            if (empty($payload['barangay']) && $plantingRequest->barangay_code) {
+                $payload['barangay'] = TagoloanLocation::barangayName($plantingRequest->barangay_code);
+            }
+
+            if (empty($payload['municipality'])) {
+                $payload['municipality'] = 'Tagoloan';
+            }
+
+            if (empty($payload['province'])) {
+                $payload['province'] = 'Misamis Oriental';
+            }
+
+            if (empty($payload['agency_id']) && $plantingRequest->agency_id) {
+                $payload['agency_id'] = $plantingRequest->agency_id;
+            }
+
+            if (empty($payload['agency_id'])) {
+                $payload['agency_id'] = $request->user()->effectiveAgencyId();
+            }
+
             $tree = Tree::create([
-                ...$request->safe()->except('photos'),
+                ...$payload,
                 'date_recorded' => now()->toDateString(),
                 'recorded_by_id' => $request->user()->id,
             ]);

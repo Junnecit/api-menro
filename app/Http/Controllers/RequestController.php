@@ -72,6 +72,12 @@ class RequestController extends Controller
         // Stamp the creator so each account only sees the requests it owns.
         $data['user_id'] = $user->id;
 
+        // Default agency to the submitter's stakeholder agency so managed
+        // field users only sync requests for their own agency.
+        if (empty($data['agency_id'])) {
+            $data['agency_id'] = $user->effectiveAgencyId();
+        }
+
         // Admins can only submit — a request always starts as Pending. Only a
         // Super Admin may set a different status at creation time.
         $data['status'] = $user->isSuperAdmin()
@@ -173,17 +179,68 @@ class RequestController extends Controller
         ]);
     }
 
+    /**
+     * User IDs whose planting requests a mobile user may plant against.
+     * Null means no ownership filter (Super Admin sees all).
+     *
+     * @return list<int>|null
+     */
+    private function plantingPoolUserIds($user): ?array
+    {
+        if ($user->isSuperAdmin()) {
+            return null;
+        }
+
+        return $user->agencyPoolUserIds();
+    }
+
     private function filteredQuery(Request $request, Builder $query): Builder
     {
+        $user = $request->user();
+
         $query = $query->with(['agency', 'user'])
-            ->ownedBy($request->user())
             ->orderByDesc('request_date')
             ->orderByDesc('id');
+
+        // Mobile field users need Approved/In Progress requests from their
+        // admin's agency pool (not only their own submissions).
+        if ($request->boolean('for_planting')) {
+            $poolIds = $this->plantingPoolUserIds($user);
+            $agencyId = $user->effectiveAgencyId();
+
+            if ($poolIds !== null) {
+                if ($agencyId) {
+                    // Own agency only: agency-tagged requests, or untagged ones
+                    // submitted by someone in the admin pool.
+                    $query->where(function ($q) use ($poolIds, $agencyId) {
+                        $q->where('agency_id', $agencyId)
+                            ->orWhere(function ($inner) use ($poolIds) {
+                                $inner->whereNull('agency_id')->whereIn('user_id', $poolIds);
+                            });
+                    });
+                } else {
+                    $query->whereIn('user_id', $poolIds);
+                }
+            }
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->string('status'));
+            } else {
+                $query->whereIn('status', ['Approved', 'In Progress']);
+            }
+        } else {
+            $query->ownedBy($user);
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->string('status'));
+            }
+        }
 
         if ($request->filled('search')) {
             $search = $request->string('search');
             $query->where(function ($q) use ($search) {
                 $q->where('request_no', 'like', "%{$search}%")
+                    ->orWhere('project_name', 'like', "%{$search}%")
                     ->orWhere('location', 'like', "%{$search}%")
                     ->orWhere('requester_name', 'like', "%{$search}%")
                     ->orWhere('custom_address', 'like', "%{$search}%")
@@ -194,10 +251,6 @@ class RequestController extends Controller
                             ->orWhere('email', 'like', "%{$search}%");
                     });
             });
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->string('status'));
         }
 
         return $query;

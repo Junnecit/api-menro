@@ -11,6 +11,8 @@ class TreeResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'request_id' => $this->request_id,
+            'planting_request' => new RequestResource($this->whenLoaded('plantingRequest')),
             'tree_code' => $this->tree_code,
             'species' => $this->species,
             'common_name' => $this->common_name,
