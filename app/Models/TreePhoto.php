@@ -10,6 +10,8 @@ class TreePhoto extends Model
     protected $fillable = [
         'tree_id',
         'path',
+        'capture_mode',
+        'angle',
     ];
 
     public function tree(): BelongsTo

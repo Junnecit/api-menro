@@ -12,6 +12,8 @@ class TreePhotoResource extends JsonResource
         return [
             'id' => $this->id,
             'url' => $request->getSchemeAndHttpHost().'/storage/'.$this->path,
+            'capture_mode' => $this->capture_mode,
+            'angle' => $this->angle,
         ];
     }
 }

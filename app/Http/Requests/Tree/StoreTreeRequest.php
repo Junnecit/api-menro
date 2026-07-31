@@ -35,6 +35,10 @@ class StoreTreeRequest extends FormRequest
             'notes' => ['nullable', 'string'],
             'photos' => ['nullable', 'array', 'max:6'],
             'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'photo_capture_modes' => ['nullable', 'array', 'max:6'],
+            'photo_capture_modes.*' => ['nullable', 'string', Rule::in(['single', '360'])],
+            'photo_angles' => ['nullable', 'array', 'max:6'],
+            'photo_angles.*' => ['nullable', 'string', Rule::in(['N', 'E', 'S', 'W', ''])],
         ];
     }
 

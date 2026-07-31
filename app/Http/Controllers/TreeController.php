@@ -63,7 +63,7 @@ class TreeController extends Controller
         }
 
         try {
-            $payload = $request->safe()->except('photos');
+            $payload = $request->safe()->except(['photos', 'photo_capture_modes', 'photo_angles']);
             $plantingRequest = PlantingRequest::query()->findOrFail($request->integer('request_id'));
 
             if (empty($payload['barangay']) && $plantingRequest->barangay_code) {
@@ -110,9 +110,14 @@ class TreeController extends Controller
 
         $tree->update(['tree_code' => sprintf('TGL-%s-%05d', now()->format('Y'), $tree->id)]);
 
-        foreach ($request->file('photos', []) as $photo) {
+        foreach ($request->file('photos', []) as $index => $photo) {
+            $mode = $request->input("photo_capture_modes.$index");
+            $angle = $request->input("photo_angles.$index");
+
             $tree->photos()->create([
                 'path' => $photo->store("tree-photos/{$tree->id}", 'public'),
+                'capture_mode' => in_array($mode, ['single', '360'], true) ? $mode : null,
+                'angle' => in_array($angle, ['N', 'E', 'S', 'W'], true) ? $angle : null,
             ]);
         }
 
