@@ -2,19 +2,55 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\PlantingRequest\AnalyzePlantingRequestDocumentRequest;
 use App\Http\Requests\PlantingRequest\StorePlantingRequestRequest;
 use App\Http\Requests\PlantingRequest\UpdatePlantingRequestRequest;
 use App\Http\Resources\RequestResource;
 use App\Models\Request as PlantingRequest;
+use App\Services\PlantingRequestDocumentAnalyzer;
 use App\Services\PlantingRequestDocumentService;
+use App\Services\PlantingRequestTemplateService;
 use App\Support\TagoloanLocation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class RequestController extends Controller
 {
-    public function __construct(private PlantingRequestDocumentService $documentService) {}
+    public function __construct(
+        private PlantingRequestDocumentService $documentService,
+        private PlantingRequestTemplateService $templateService,
+        private PlantingRequestDocumentAnalyzer $documentAnalyzer,
+    ) {}
+
+    public function documentTemplate(): Response
+    {
+        $this->authorize('viewAny', PlantingRequest::class);
+
+        $binary = $this->templateService->buildDocxBinary();
+
+        return response($binary, 200, [
+            'Content-Type' => $this->templateService->mimeType(),
+            'Content-Disposition' => 'attachment; filename="'.$this->templateService->filename().'"',
+            'Content-Length' => (string) strlen($binary),
+        ]);
+    }
+
+    public function analyzeDocument(AnalyzePlantingRequestDocumentRequest $request): JsonResponse
+    {
+        $this->authorize('create', PlantingRequest::class);
+
+        $analysis = $this->documentAnalyzer->analyze($request->file('document'));
+
+        return response()->json([
+            'success' => true,
+            'message' => $analysis['complete']
+                ? 'All template components were found.'
+                : 'Document analyzed — some template fields are missing.',
+            'data' => $analysis,
+        ]);
+    }
 
     public function index(Request $request): JsonResponse
     {
@@ -72,7 +108,7 @@ class RequestController extends Controller
         // Stamp the creator so each account only sees the requests it owns.
         $data['user_id'] = $user->id;
 
-        // Default agency to the submitter's stakeholder agency so managed
+        // Default agency to the submitter's agency so managed
         // field users only sync requests for their own agency.
         if (empty($data['agency_id'])) {
             $data['agency_id'] = $user->effectiveAgencyId();

@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // The stakeholder agency this admin account represents. Each
+            // The agency this admin account represents. Each
             // agency has at most one admin (enforced via unique). Null for
             // non-admin roles.
             $table->foreignId('agency_id')->nullable()->unique()->after('admin_id')

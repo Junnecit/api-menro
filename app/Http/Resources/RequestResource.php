@@ -47,6 +47,7 @@ class RequestResource extends JsonResource
             'document_url' => $documentUrl,
             'document_name' => $this->document_name,
             'document_mime' => $this->document_mime,
+            'seedling_draft' => $this->seedling_draft,
             'status' => $this->status,
             'request_date' => $this->request_date?->toDateString(),
             'created_at' => $this->created_at?->toISOString(),

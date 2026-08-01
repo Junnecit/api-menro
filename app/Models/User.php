@@ -75,7 +75,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * The stakeholder agency this admin account represents. Only set for
+     * The agency this admin account represents. Only set for
      * `admin` role accounts; null for super-admins and regular users.
      */
     public function agency(): BelongsTo
@@ -98,7 +98,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * User ids in this account's stakeholder pool (for read/sync scopes).
+     * User ids in this account's agency pool (for read/sync scopes).
      * Admins: self + managed users. Field users under an admin: that admin's
      * pool. Unassigned users: self only. Super Admins should not call this —
      * they bypass pool filters entirely.
@@ -123,7 +123,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Stakeholder agency this account operates under. Admins carry agency_id
+     * Agency this account operates under. Admins carry agency_id
      * directly; managed field users inherit it from their admin.
      */
     public function effectiveAgencyId(): ?int

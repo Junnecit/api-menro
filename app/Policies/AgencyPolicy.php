@@ -10,7 +10,7 @@ class AgencyPolicy
     public function viewAny(User $user): bool
     {
         // Admins may still read agencies (needed for planting request forms),
-        // but cannot manage the stakeholder registry.
+        // but cannot manage the agency registry.
         return true;
     }
 

@@ -28,7 +28,7 @@ class Agency extends Model
     ];
 
     /**
-     * The admin account that represents this stakeholder in the portal.
+     * The admin account that represents this agency in the portal.
      * At most one per agency (enforced by a unique constraint on users.agency_id).
      */
     public function admin()

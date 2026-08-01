@@ -19,7 +19,7 @@ class StorePlantingRequestRequest extends FormRequest
             'document' => [
                 'required',
                 'file',
-                'mimes:pdf,doc,docx',
+                'mimes:pdf,doc,docx,jpg,jpeg,png,webp',
                 'max:10240',
             ],
             'request_no' => ['nullable', 'string', 'max:50', 'unique:requests,request_no'],
@@ -46,9 +46,9 @@ class StorePlantingRequestRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'document.required' => 'Please upload a planting request document (PDF, DOC, or DOCX).',
-            'document.mimes' => 'The document must be a PDF, DOC, or DOCX file.',
-            'document.max' => 'The document may not be greater than 10 MB.',
+            'document.required' => 'Please upload a planting request document or clear photo of the form.',
+            'document.mimes' => 'The file must be a PDF, DOC, DOCX, JPG, PNG, or WEBP.',
+            'document.max' => 'The file may not be greater than 10 MB.',
             'project_name.required' => 'Please enter a project name.',
             'target_trees.required' => 'Please enter the target number of trees.',
             'target_trees.min' => 'Target trees must be at least 1.',

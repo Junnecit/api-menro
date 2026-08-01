@@ -21,7 +21,7 @@ class UserController extends Controller
         $query = User::query()->orderBy('name');
 
         // Inspector picker must stay inside the caller's agency pool so field
-        // users never see accounts from other stakeholder agencies.
+        // users never see accounts from other agencies.
         if (! $user->isSuperAdmin()) {
             $query->whereIn('id', $user->agencyPoolUserIds());
         }
@@ -85,7 +85,7 @@ class UserController extends Controller
             $data['admin_id'] = null;
         }
 
-        // A stakeholder agency link only makes sense for admin accounts.
+        // An agency link only makes sense for admin accounts.
         if ($role->slug !== 'admin') {
             $data['agency_id'] = null;
         }
@@ -147,7 +147,7 @@ class UserController extends Controller
             $data['admin_id'] = null;
         }
 
-        // A stakeholder agency link only makes sense for admin accounts.
+        // An agency link only makes sense for admin accounts.
         if ($targetRoleSlug !== 'admin' && array_key_exists('agency_id', $data)) {
             $data['agency_id'] = null;
         }

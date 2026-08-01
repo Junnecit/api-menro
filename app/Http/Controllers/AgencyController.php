@@ -15,7 +15,7 @@ class AgencyController extends Controller
 {
     /**
      * Lightweight id/name list for pickers (e.g. linking an admin account to
-     * the stakeholder they represent). No pagination, no policy gate — same
+     * the agency they represent). No pagination, no policy gate — same
      * pattern as UserController::options().
      */
     public function options(): JsonResponse
@@ -52,7 +52,7 @@ class AgencyController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Stakeholder created successfully.',
+            'message' => 'Agency created successfully.',
             'data' => new AgencyResource($agency->loadCount('requests')),
         ], 201);
     }
@@ -75,7 +75,7 @@ class AgencyController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Stakeholder updated successfully.',
+            'message' => 'Agency updated successfully.',
             'data' => new AgencyResource($agency->fresh()->loadCount('requests')),
         ]);
     }
@@ -88,7 +88,7 @@ class AgencyController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Stakeholder moved to trash.',
+            'message' => 'Agency moved to trash.',
         ]);
     }
 
@@ -101,7 +101,7 @@ class AgencyController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Stakeholder restored successfully.',
+            'message' => 'Agency restored successfully.',
             'data' => new AgencyResource($agency->fresh()->loadCount('requests')),
         ]);
     }
@@ -114,7 +114,7 @@ class AgencyController extends Controller
         if ($agency->requests()->exists() || $agency->trees()->exists()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot permanently delete a stakeholder with linked planting requests or trees.',
+                'message' => 'Cannot permanently delete an agency with linked planting requests or trees.',
             ], 422);
         }
 
@@ -122,7 +122,7 @@ class AgencyController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Stakeholder permanently deleted.',
+            'message' => 'Agency permanently deleted.',
         ]);
     }
 

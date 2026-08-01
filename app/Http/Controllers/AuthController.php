@@ -72,12 +72,12 @@ class AuthController extends Controller
             ], 201);
         }
 
-        // Every self-registered web account becomes a Stakeholder — the 'admin'
+        // Every self-registered web account becomes an Admin — the 'admin'
         // slug, so it lands on the admin dashboard with full admin powers
-        // immediately, but presented as "Stakeholder". The role is fixed
-        // server-side (not chosen by the registrant) to avoid privilege
-        // escalation; elevated Super Admin access is still granted only through
-        // user management.
+        // immediately. The role is fixed server-side (not chosen by the
+        // registrant) to avoid privilege escalation; elevated Super Admin
+        // access is still granted only through user management. An Agency
+        // link (agency_id) can be set later in user management.
         $defaultRole = Role::where('slug', 'admin')->first();
 
         $user = User::create([

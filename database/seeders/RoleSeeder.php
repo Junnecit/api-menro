@@ -12,9 +12,9 @@ class RoleSeeder extends Seeder
         $roles = [
             ['name' => 'Super Admin', 'slug' => 'super-admin'],
             // Self-registered web accounts land on this role. It keeps the
-            // 'admin' slug (so it retains the full admin interface + powers),
-            // but is presented as "Stakeholder" throughout the app.
-            ['name' => 'Stakeholder', 'slug' => 'admin'],
+            // 'admin' slug (so it retains the full admin interface + powers).
+            // Partner orgs are Agencies; this role may link to one via agency_id.
+            ['name' => 'Admin', 'slug' => 'admin'],
             ['name' => 'User', 'slug' => 'user'],
             ['name' => 'Other', 'slug' => 'other'],
         ];

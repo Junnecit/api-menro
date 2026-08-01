@@ -22,6 +22,7 @@ class Request extends Model
         'document_path',
         'document_name',
         'document_mime',
+        'seedling_draft',
         'status',
         'request_date',
     ];
@@ -29,6 +30,7 @@ class Request extends Model
     protected $casts = [
         'request_date' => 'date',
         'target_trees' => 'integer',
+        'seedling_draft' => 'array',
     ];
 
     public function agency()

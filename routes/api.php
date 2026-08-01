@@ -58,6 +58,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('agencies/{id}/force', [AgencyController::class, 'forceDestroy']);
     Route::apiResource('agencies', AgencyController::class);
     Route::get('requests/trash', [RequestController::class, 'trash']);
+    Route::get('requests/document-template', [RequestController::class, 'documentTemplate']);
+    Route::post('requests/analyze-document', [RequestController::class, 'analyzeDocument']);
     Route::post('requests/{id}/restore', [RequestController::class, 'restore']);
     Route::delete('requests/{id}/force', [RequestController::class, 'forceDestroy']);
     // Multipart document replace (browsers cannot attach files to PUT reliably).
