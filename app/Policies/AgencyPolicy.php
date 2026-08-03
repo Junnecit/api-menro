@@ -9,8 +9,7 @@ class AgencyPolicy
 {
     public function viewAny(User $user): bool
     {
-        // Admins may still read agencies (needed for planting request forms),
-        // but cannot manage the agency registry.
+        // All authenticated roles may list agencies (needed for forms/options).
         return true;
     }
 
@@ -21,26 +20,34 @@ class AgencyPolicy
 
     public function create(User $user): bool
     {
-        return ! $user->isAdmin();
+        // Registry create stays with Super Admin (admins get an agency at signup).
+        return $user->isSuperAdmin();
     }
 
     public function update(User $user, Agency $agency): bool
     {
-        return ! $user->isAdmin();
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        // Admins may edit their own linked agency (details, soil doc, etc.).
+        return $user->isAdmin()
+            && $user->agency_id !== null
+            && (int) $user->agency_id === (int) $agency->id;
     }
 
     public function delete(User $user, Agency $agency): bool
     {
-        return ! $user->isAdmin();
+        return $user->isSuperAdmin();
     }
 
     public function restore(User $user, Agency $agency): bool
     {
-        return ! $user->isAdmin();
+        return $user->isSuperAdmin();
     }
 
     public function forceDelete(User $user, Agency $agency): bool
     {
-        return ! $user->isAdmin();
+        return $user->isSuperAdmin();
     }
 }

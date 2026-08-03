@@ -68,6 +68,7 @@ XML;
             '',
             'Project Name: ______________________________',
             'Target Trees: __________',
+            'Type of Seedling: ______________________________',
             'Barangay: ______________________________',
             'Municipality: Tagoloan',
             '',

@@ -4,16 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\InactiveGoogleAccountException;
 use App\Exceptions\UnauthorizedGoogleEmailException;
+use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use App\Services\GoogleAuthService;
+use App\Services\GoogleOAuthCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class GoogleAuthController extends Controller
 {
     public function __construct(
         private GoogleAuthService $googleAuthService,
         private AuthService $authService,
+        private GoogleOAuthCodeService $oauthCodes,
     ) {}
 
     public function redirect(): JsonResponse|RedirectResponse
@@ -41,13 +45,42 @@ class GoogleAuthController extends Controller
 
         try {
             $user = $this->googleAuthService->findOrCreateUser();
-            $token = $this->authService->createToken($user, 'google-auth-token');
+            // Never put the Sanctum token in the redirect URL — use a short-lived
+            // one-time code the SPA exchanges via POST.
+            $code = $this->oauthCodes->issue($user);
 
-            return redirect("{$frontendUrl}/auth/google/callback?token={$token}");
+            return redirect("{$frontendUrl}/auth/google/callback?code={$code}");
         } catch (UnauthorizedGoogleEmailException|InactiveGoogleAccountException $e) {
             return redirect("{$frontendUrl}/auth/google/callback?error=".urlencode($e->getMessage()));
         } catch (\Exception $e) {
             return redirect("{$frontendUrl}/auth/google/callback?error=".urlencode('Google authentication failed.'));
         }
+    }
+
+    public function exchange(Request $request): JsonResponse
+    {
+        $request->validate([
+            'code' => ['required', 'string', 'min:32', 'max:128'],
+        ]);
+
+        $user = $this->oauthCodes->consume($request->string('code')->toString());
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired Google sign-in code.',
+            ], 422);
+        }
+
+        $token = $this->authService->createToken($user, 'google-auth-token');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Google authentication successful.',
+            'data' => [
+                'user' => new UserResource($user->load('role')),
+                'token' => $token,
+            ],
+        ]);
     }
 }

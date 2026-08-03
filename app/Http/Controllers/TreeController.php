@@ -115,7 +115,7 @@ class TreeController extends Controller
             $angle = $request->input("photo_angles.$index");
 
             $tree->photos()->create([
-                'path' => $photo->store("tree-photos/{$tree->id}", 'public'),
+                'path' => \App\Support\PrivateStorage::store($photo, "tree-photos/{$tree->id}"),
                 'capture_mode' => in_array($mode, ['single', '360'], true) ? $mode : null,
                 'angle' => in_array($angle, ['N', 'E', 'S', 'W'], true) ? $angle : null,
             ]);

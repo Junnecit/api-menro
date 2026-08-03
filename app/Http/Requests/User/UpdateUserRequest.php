@@ -20,7 +20,7 @@ class UpdateUserRequest extends FormRequest
         $userId = $this->route('user')?->id ?? $this->route('id');
 
         return [
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'name' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('users', 'name')->ignore($userId)],
             'email' => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
             'password' => ['nullable', Password::defaults()],
             'role_id' => ['sometimes', 'required', 'exists:roles,id'],
@@ -29,6 +29,13 @@ class UpdateUserRequest extends FormRequest
             'status' => ['sometimes', 'required', Rule::enum(UserStatus::class)],
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:500'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.unique' => 'This name is already being used.',
         ];
     }
 }

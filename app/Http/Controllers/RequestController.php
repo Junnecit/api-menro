@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PlantingHabitat;
 use App\Http\Requests\PlantingRequest\AnalyzePlantingRequestDocumentRequest;
 use App\Http\Requests\PlantingRequest\StorePlantingRequestRequest;
 use App\Http\Requests\PlantingRequest\UpdatePlantingRequestRequest;
@@ -10,11 +11,13 @@ use App\Models\Request as PlantingRequest;
 use App\Services\PlantingRequestDocumentAnalyzer;
 use App\Services\PlantingRequestDocumentService;
 use App\Services\PlantingRequestTemplateService;
+use App\Support\PrivateStorage;
 use App\Support\TagoloanLocation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RequestController extends Controller
 {
@@ -121,6 +124,7 @@ class RequestController extends Controller
             : 'Pending';
 
         $data['request_date'] = $data['request_date'] ?? now()->toDateString();
+        $data['habitat'] = $data['habitat'] ?? PlantingHabitat::Terrestrial->value;
 
         // Document-only submissions do not collect barangay in the form; details
         // live in the uploaded file until a reviewer fills them in later.
@@ -146,6 +150,17 @@ class RequestController extends Controller
             'success' => true,
             'data' => new RequestResource($request->load(['agency', 'user'])),
         ]);
+    }
+
+    public function downloadDocument(PlantingRequest $request): StreamedResponse
+    {
+        $this->authorize('view', $request);
+
+        return PrivateStorage::streamDownload(
+            $request->document_path,
+            $request->document_name ?: 'document',
+            $request->document_mime,
+        );
     }
 
     public function update(UpdatePlantingRequestRequest $formRequest, PlantingRequest $request): JsonResponse

@@ -23,6 +23,9 @@ class Agency extends Model
         'location',
         'custom_address',
         'soil_type',
+        'soil_document_path',
+        'soil_document_name',
+        'soil_document_mime',
         'color',
         'status',
     ];

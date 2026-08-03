@@ -4,6 +4,7 @@ use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GoogleAuthController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PlantingMonitoringController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportCenterController;
@@ -14,14 +15,28 @@ use App\Http\Controllers\TreeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
+// Temporary signed URLs for <img> display (no Bearer token required).
+Route::get('media/profile-photos/{user}', [MediaController::class, 'profilePhoto'])
+    ->middleware('signed')
+    ->name('media.profile-photo');
+Route::get('media/tree-photos/{photo}', [MediaController::class, 'treePhoto'])
+    ->middleware('signed')
+    ->name('media.tree-photo');
+
 Route::prefix('auth')->group(function () {
-    Route::post('register', [AuthController::class, 'register']);
-    Route::get('admins', [AuthController::class, 'admins']);
+    Route::post('register', [AuthController::class, 'register'])->middleware('throttle:registration-otp-send');
+    Route::get('admins', [AuthController::class, 'admins'])->middleware('throttle:auth-admins');
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
+    Route::post('verify-registration-otp', [AuthController::class, 'verifyRegistrationOtp'])
+        ->middleware('throttle:registration-otp-verify');
+    Route::post('resend-registration-otp', [AuthController::class, 'resendRegistrationOtp'])
+        ->middleware('throttle:registration-otp-send');
     Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:forgot-password');
-    Route::post('reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:reset-password');
     Route::get('google/redirect', [GoogleAuthController::class, 'redirect']);
     Route::get('google/callback', [GoogleAuthController::class, 'callback']);
+    Route::post('google/exchange', [GoogleAuthController::class, 'exchange'])
+        ->middleware('throttle:google-exchange');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
@@ -56,6 +71,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('agencies/trash', [AgencyController::class, 'trash']);
     Route::post('agencies/{id}/restore', [AgencyController::class, 'restore']);
     Route::delete('agencies/{id}/force', [AgencyController::class, 'forceDestroy']);
+    Route::post('agencies/{agency}/soil-document', [AgencyController::class, 'uploadSoilDocument']);
+    Route::delete('agencies/{agency}/soil-document', [AgencyController::class, 'removeSoilDocument']);
+    Route::get('agencies/{agency}/soil-document/download', [AgencyController::class, 'downloadSoilDocument']);
     Route::apiResource('agencies', AgencyController::class);
     Route::get('requests/trash', [RequestController::class, 'trash']);
     Route::get('requests/document-template', [RequestController::class, 'documentTemplate']);
@@ -64,6 +82,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('requests/{id}/force', [RequestController::class, 'forceDestroy']);
     // Multipart document replace (browsers cannot attach files to PUT reliably).
     Route::post('requests/{request}/document', [RequestController::class, 'update']);
+    Route::get('requests/{request}/document/download', [RequestController::class, 'downloadDocument']);
     Route::apiResource('requests', RequestController::class);
     Route::get('planting-monitorings/trash', [PlantingMonitoringController::class, 'trash']);
     Route::post('planting-monitorings/{id}/restore', [PlantingMonitoringController::class, 'restore']);

@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\ReportFile;
+use App\Support\PrivateStorage;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ReportFileService
@@ -12,7 +12,7 @@ class ReportFileService
     public function storeUpload(?int $folderId, UploadedFile $file, ?string $name, ?int $userId): ReportFile
     {
         $folderKey = $folderId ? (string) $folderId : 'root';
-        $path = $file->store("report-files/{$folderKey}", 'public');
+        $path = PrivateStorage::store($file, "report-files/{$folderKey}");
 
         return ReportFile::create([
             'folder_id' => $folderId,
@@ -37,7 +37,7 @@ class ReportFileService
         $filename = Str::uuid()->toString().'.pdf';
         $path = "report-files/{$folderKey}/{$filename}";
 
-        Storage::disk('public')->put($path, $contents);
+        PrivateStorage::put($path, $contents);
 
         return ReportFile::create([
             'folder_id' => $folderId,
@@ -53,8 +53,6 @@ class ReportFileService
 
     public function deleteFile(ReportFile $file): void
     {
-        if ($file->path) {
-            Storage::disk('public')->delete($file->path);
-        }
+        PrivateStorage::delete($file->path);
     }
 }

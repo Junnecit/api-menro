@@ -42,8 +42,8 @@ return [
 
         // New Google sign-ins are only allowed to create an account when the
         // email is in this list or falls under one of the allowed domains.
-        // Comma-separated in .env. Leave both empty to allow any Google email.
-        // Existing users already in the database can still sign in regardless.
+        // Comma-separated in .env. Outside local/testing, empty allowlists
+        // reject NEW Google accounts; existing users can still sign in.
         'allowed_emails' => array_filter(array_map(
             fn ($email) => strtolower(trim($email)),
             explode(',', env('GOOGLE_ALLOWED_EMAILS', ''))

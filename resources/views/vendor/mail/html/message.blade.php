@@ -1,7 +1,11 @@
+@php
+    $frontendUrl = rtrim(env('FRONTEND_URL', config('app.url')), '/');
+    $supportEmail = config('mail.from.address');
+@endphp
 <x-mail::layout>
 {{-- Header --}}
 <x-slot:header>
-<x-mail::header :url="config('app.url')">
+<x-mail::header :url="$frontendUrl">
 {{-- Replaced with a cid: reference by App\Mail\EmbedsMenroLogo before sending, so
      the logo renders in mail clients (Gmail, Outlook, etc.) that won't fetch a
      localhost/private-network image URL or render an inline base64 data: URI. --}}
@@ -24,7 +28,7 @@
 {{-- Footer --}}
 <x-slot:footer>
 <x-mail::footer>
-© {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}
+[Help](mailto:{{ $supportEmail }})&nbsp;&nbsp;&nbsp;[Terms & conditions]({{ $frontendUrl }})&nbsp;&nbsp;&nbsp;[Privacy Policy]({{ $frontendUrl }})
 </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>

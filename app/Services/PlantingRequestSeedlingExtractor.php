@@ -33,7 +33,19 @@ class PlantingRequestSeedlingExtractor
     ];
 
     /**
-     * @return array{meta: array<string, mixed>}|null
+     * Optional labeled fields — shown in analysis but not required for "complete".
+     *
+     * @var array<string, array{label: string, pattern: string}>
+     */
+    private const OPTIONAL_FIELDS = [
+        'species' => [
+            'label' => 'Type of Seedling',
+            'pattern' => '/(?:TYPE\s*OF\s*SEEDLINGS?|SEEDLING\s*TYPE|TREE\s*SPECIES|SPECIES)\s*[:\-]?\s*([^\n]+)/i',
+        ],
+    ];
+
+    /**
+     * @return array{meta: array<string, mixed>, seedling_draft: array<string, mixed>|null}|null
      */
     public function extract(UploadedFile $file): ?array
     {
@@ -60,6 +72,7 @@ class PlantingRequestSeedlingExtractor
      * @return array{
      *   components: list<array{key: string, label: string, found: bool, value: mixed}>,
      *   meta: array<string, mixed>,
+     *   seedling_draft: array<string, mixed>|null,
      *   complete: bool
      * }|null
      */
@@ -86,6 +99,7 @@ class PlantingRequestSeedlingExtractor
      * @return array{
      *   components: list<array{key: string, label: string, found: bool, value: mixed}>,
      *   meta: array<string, mixed>,
+     *   seedling_draft: array<string, mixed>|null,
      *   complete: bool
      * }
      */
@@ -94,32 +108,46 @@ class PlantingRequestSeedlingExtractor
         $normalized = $this->normalizeText($text);
         $parsed = $this->parseLabeledFields($normalized) ?? [
             'meta' => [],
+            'seedling_draft' => null,
         ];
 
         $components = $this->buildComponents($parsed['meta']);
-        $complete = $components !== [] && ! in_array(false, array_column($components, 'found'), true);
+        $requiredFound = [];
+        foreach ($components as $component) {
+            if (array_key_exists($component['key'], self::META_FIELDS)) {
+                $requiredFound[] = $component['found'];
+            }
+        }
+        $complete = $requiredFound !== [] && ! in_array(false, $requiredFound, true);
 
         return [
             'components' => $components,
             'meta' => $parsed['meta'],
+            'seedling_draft' => $parsed['seedling_draft'] ?? null,
             'complete' => $complete,
         ];
     }
 
     /**
-     * @return array{meta: array<string, mixed>}|null
+     * @return array{meta: array<string, mixed>, seedling_draft: array<string, mixed>|null}|null
      */
     public function parseLabeledFields(string $text): ?array
     {
         $normalized = $this->normalizeText($text);
         $meta = $this->parseMetaFields($normalized);
+        $seedlingDraft = $this->parseSeedlingDraft($normalized);
 
-        if ($meta === []) {
+        if ($seedlingDraft !== null && ! empty($seedlingDraft['species'])) {
+            $meta['species'] = implode(', ', $seedlingDraft['species']);
+        }
+
+        if ($meta === [] && $seedlingDraft === null) {
             return null;
         }
 
         return [
             'meta' => $meta,
+            'seedling_draft' => $seedlingDraft,
         ];
     }
 
@@ -152,7 +180,7 @@ class PlantingRequestSeedlingExtractor
     {
         $components = [];
 
-        foreach (self::META_FIELDS as $key => $field) {
+        foreach (array_merge(self::META_FIELDS, self::OPTIONAL_FIELDS) as $key => $field) {
             $value = $meta[$key] ?? null;
             $components[] = [
                 'key' => $key,
@@ -163,6 +191,65 @@ class PlantingRequestSeedlingExtractor
         }
 
         return $components;
+    }
+
+    /**
+     * @return array{species: list<string>, raw: string, source: string}|null
+     */
+    private function parseSeedlingDraft(string $normalized): ?array
+    {
+        $field = self::OPTIONAL_FIELDS['species'];
+        if (! preg_match($field['pattern'], $normalized, $matches)) {
+            return null;
+        }
+
+        $raw = $this->cleanRaw($matches[1] ?? '');
+        if ($raw === null) {
+            return null;
+        }
+
+        $species = $this->splitSpeciesList($raw);
+        if ($species === []) {
+            return null;
+        }
+
+        return [
+            'species' => $species,
+            'raw' => $raw,
+            'source' => 'document',
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function splitSpeciesList(string $raw): array
+    {
+        $parts = preg_split('/\s*(?:,|;|\/|\band\b|&)\s*/i', $raw) ?: [];
+        $names = [];
+
+        foreach ($parts as $part) {
+            $cleaned = $this->cleanRaw((string) $part);
+            if ($cleaned === null) {
+                continue;
+            }
+            $cleaned = preg_replace('/\s+/', ' ', $cleaned) ?? $cleaned;
+            if ($cleaned === '') {
+                continue;
+            }
+            $exists = false;
+            foreach ($names as $existing) {
+                if (mb_strtolower($existing) === mb_strtolower($cleaned)) {
+                    $exists = true;
+                    break;
+                }
+            }
+            if (! $exists) {
+                $names[] = $cleaned;
+            }
+        }
+
+        return $names;
     }
 
     /**

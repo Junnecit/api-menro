@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\PlantingRequest;
 
+use App\Enums\PlantingHabitat;
 use App\Support\TagoloanLocation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -34,6 +35,7 @@ class UpdatePlantingRequestRequest extends FormRequest
             'agency_id' => ['nullable', 'integer', 'exists:agencies,id'],
             'requester_name' => ['nullable', 'string', 'max:255'],
             'project_name' => ['sometimes', 'required', 'string', 'max:255'],
+            'habitat' => ['sometimes', 'nullable', Rule::in(PlantingHabitat::values())],
             'target_trees' => ['sometimes', 'required', 'integer', 'min:1'],
             'barangay_code' => ['sometimes', 'required', 'string', Rule::in(TagoloanLocation::barangayCodes())],
             'custom_address' => ['nullable', 'string', 'max:1000'],

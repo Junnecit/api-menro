@@ -4,15 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Agency\StoreAgencyRequest;
 use App\Http\Requests\Agency\UpdateAgencyRequest;
+use App\Http\Requests\Agency\UploadAgencySoilDocumentRequest;
 use App\Http\Resources\AgencyResource;
 use App\Models\Agency;
+use App\Services\AgencySoilDocumentService;
+use App\Support\PrivateStorage;
 use App\Support\PsgcLocation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AgencyController extends Controller
 {
+    public function __construct(private AgencySoilDocumentService $soilDocumentService) {}
+
     /**
      * Lightweight id/name list for pickers (e.g. linking an admin account to
      * the agency they represent). No pagination, no policy gate — same
@@ -92,6 +98,45 @@ class AgencyController extends Controller
         ]);
     }
 
+    public function uploadSoilDocument(
+        UploadAgencySoilDocumentRequest $request,
+        Agency $agency,
+    ): JsonResponse {
+        $this->authorize('update', $agency);
+
+        $this->soilDocumentService->store($agency, $request->file('document'));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Soil document uploaded successfully.',
+            'data' => new AgencyResource($agency->fresh()->loadCount('requests')),
+        ]);
+    }
+
+    public function removeSoilDocument(Agency $agency): JsonResponse
+    {
+        $this->authorize('update', $agency);
+
+        $this->soilDocumentService->delete($agency);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Soil document removed.',
+            'data' => new AgencyResource($agency->fresh()->loadCount('requests')),
+        ]);
+    }
+
+    public function downloadSoilDocument(Agency $agency): StreamedResponse
+    {
+        $this->authorize('view', $agency);
+
+        return PrivateStorage::streamDownload(
+            $agency->soil_document_path,
+            $agency->soil_document_name ?: 'soil-document',
+            $agency->soil_document_mime,
+        );
+    }
+
     public function restore(int $id): JsonResponse
     {
         $agency = Agency::onlyTrashed()->findOrFail($id);
@@ -117,6 +162,8 @@ class AgencyController extends Controller
                 'message' => 'Cannot permanently delete an agency with linked planting requests or trees.',
             ], 422);
         }
+
+        $this->soilDocumentService->deleteFile($agency);
 
         $agency->forceDelete();
 

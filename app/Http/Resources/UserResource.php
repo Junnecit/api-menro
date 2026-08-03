@@ -22,10 +22,9 @@ class UserResource extends JsonResource
             'agency' => new AgencyResource($this->whenLoaded('agency')),
             'status' => $this->status?->value ?? $this->status,
             'phone' => $this->phone,
+            'date_of_birth' => $this->date_of_birth?->format('Y-m-d'),
             'address' => $this->address,
-            'profile_photo_url' => $this->profile_photo_path
-                ? $request->getSchemeAndHttpHost().'/storage/'.$this->profile_photo_path
-                : null,
+            'profile_photo_url' => \App\Support\SignedMediaUrl::profilePhoto($this->resource),
             'email_verified_at' => $this->email_verified_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

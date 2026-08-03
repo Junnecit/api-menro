@@ -36,10 +36,6 @@ class GoogleAuthService
     {
         $googleUser = $this->provider()->stateless()->user();
 
-        if (! $this->isEmailAuthorized($googleUser->getEmail())) {
-            throw new UnauthorizedGoogleEmailException($googleUser->getEmail());
-        }
-
         $user = User::where('google_id', $googleUser->getId())
             ->orWhere('email', $googleUser->getEmail())
             ->first();
@@ -54,6 +50,11 @@ class GoogleAuthService
             }
 
             return $user;
+        }
+
+        // New Google accounts only — fail closed outside local when allowlists are empty.
+        if (! $this->isEmailAuthorized($googleUser->getEmail())) {
+            throw new UnauthorizedGoogleEmailException($googleUser->getEmail());
         }
 
         $defaultRole = Role::where('slug', 'user')->first();
@@ -73,8 +74,10 @@ class GoogleAuthService
         $allowedEmails = Config::get('services.google.allowed_emails', []);
         $allowedDomains = Config::get('services.google.allowed_domains', []);
 
+        // Fail closed outside local: empty allowlists mean no new Google sign-ins.
+        // Existing users are still matched earlier in findOrCreateUser by google_id/email.
         if (empty($allowedEmails) && empty($allowedDomains)) {
-            return true;
+            return app()->environment('local', 'testing');
         }
 
         $email = strtolower($email);

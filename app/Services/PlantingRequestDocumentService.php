@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Models\Request as PlantingRequest;
+use App\Support\PrivateStorage;
 use App\Support\TagoloanLocation;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 class PlantingRequestDocumentService
 {
@@ -20,7 +20,7 @@ class PlantingRequestDocumentService
 
         $this->deleteFile($plantingRequest);
 
-        $path = $file->store('planting-request-docs', 'public');
+        $path = PrivateStorage::store($file, 'planting-request-docs');
 
         $updates = [
             'document_path' => $path,
@@ -39,9 +39,7 @@ class PlantingRequestDocumentService
 
     public function deleteFile(PlantingRequest $plantingRequest): void
     {
-        if ($plantingRequest->document_path) {
-            Storage::disk('public')->delete($plantingRequest->document_path);
-        }
+        PrivateStorage::delete($plantingRequest->document_path);
     }
 
     public function delete(PlantingRequest $plantingRequest): void

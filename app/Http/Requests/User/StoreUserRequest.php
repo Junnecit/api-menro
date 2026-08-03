@@ -18,7 +18,7 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', 'unique:users,name'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', Password::defaults()],
             'role_id' => ['required', 'exists:roles,id'],
@@ -27,6 +27,13 @@ class StoreUserRequest extends FormRequest
             'status' => ['required', Rule::enum(UserStatus::class)],
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:500'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.unique' => 'This name is already being used.',
         ];
     }
 }

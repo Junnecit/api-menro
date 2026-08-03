@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Support\PrivateStorage;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 class ProfilePhotoService
 {
@@ -12,7 +12,7 @@ class ProfilePhotoService
     {
         $this->delete($user);
 
-        $path = $file->store('profile-photos', 'public');
+        $path = PrivateStorage::store($file, 'profile-photos');
         $user->update(['profile_photo_path' => $path]);
 
         return $path;
@@ -21,7 +21,7 @@ class ProfilePhotoService
     public function delete(User $user): void
     {
         if ($user->profile_photo_path) {
-            Storage::disk('public')->delete($user->profile_photo_path);
+            PrivateStorage::delete($user->profile_photo_path);
             $user->update(['profile_photo_path' => null]);
         }
     }

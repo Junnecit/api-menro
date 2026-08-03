@@ -45,11 +45,31 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ReportFile::class, ReportCenterPolicy::class);
 
         RateLimiter::for('login', function (Request $request) {
-            return Limit::perMinute(5)->by($request->input('email').'|'.$request->ip());
+            return Limit::perMinute(3)->by($request->input('email').'|'.$request->ip());
         });
 
         RateLimiter::for('forgot-password', function (Request $request) {
             return Limit::perMinute(3)->by($request->input('email').'|'.$request->ip());
+        });
+
+        RateLimiter::for('registration-otp-send', function (Request $request) {
+            return Limit::perMinute(3)->by($request->input('email').'|'.$request->ip());
+        });
+
+        RateLimiter::for('registration-otp-verify', function (Request $request) {
+            return Limit::perMinute(5)->by($request->input('email').'|'.$request->ip());
+        });
+
+        RateLimiter::for('reset-password', function (Request $request) {
+            return Limit::perMinute(5)->by($request->input('email').'|'.$request->ip());
+        });
+
+        RateLimiter::for('auth-admins', function (Request $request) {
+            return Limit::perMinute(30)->by($request->ip());
+        });
+
+        RateLimiter::for('google-exchange', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
         });
 
         // This is an API-only app with no `password.reset` web route, so the
@@ -66,14 +86,19 @@ class AppServiceProvider extends ServiceProvider
         ResetPassword::toMailUsing(function ($notifiable, string $token) {
             $url = call_user_func(ResetPassword::$createUrlCallback, $notifiable, $token);
             $expireMinutes = config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
+            $supportEmail = config('mail.from.address');
 
             return EmbedsMenroLogo::embed(
                 (new MailMessage)
                     ->subject('Reset your password')
+                    ->greeting('Reset your password')
                     ->line('You are receiving this email because we received a password reset request for your account.')
                     ->action('Reset Password', $url)
                     ->line("This password reset link will expire in {$expireMinutes} minutes.")
                     ->line('If you did not request a password reset, no further action is required.')
+                    ->line('---')
+                    ->line("Having trouble with your account? [Contact us](mailto:{$supportEmail})")
+                    ->salutation("Best,\nMENRO Tagoloan team")
             );
         });
     }

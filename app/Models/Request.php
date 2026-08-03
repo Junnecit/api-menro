@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PlantingHabitat;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -15,6 +16,7 @@ class Request extends Model
         'agency_id',
         'requester_name',
         'project_name',
+        'habitat',
         'target_trees',
         'barangay_code',
         'location',
@@ -31,6 +33,7 @@ class Request extends Model
         'request_date' => 'date',
         'target_trees' => 'integer',
         'seedling_draft' => 'array',
+        'habitat' => PlantingHabitat::class,
     ];
 
     public function agency()

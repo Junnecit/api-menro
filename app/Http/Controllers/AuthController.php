@@ -8,27 +8,38 @@ use App\Http\Requests\Auth\DeleteAccountRequest;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ResendRegistrationOtpRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
+use App\Http\Requests\Auth\VerifyRegistrationOtpRequest;
 use App\Http\Resources\UserResource;
+use App\Models\Agency;
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\RegistrationOtp;
 use App\Services\AuthService;
+use App\Services\RegistrationOtpService;
+use App\Support\PsgcLocation;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    public function __construct(private AuthService $authService) {}
+    public function __construct(
+        private AuthService $authService,
+        private RegistrationOtpService $registrationOtp,
+    ) {}
 
     /**
      * Public list of active admins, for the mobile registration screen's
      * "managing admin" picker. Only id/name are exposed — no auth required,
-     * since this is shown before a token exists.
+     * since this is shown before a token exists. Rate-limited to reduce
+     * enumeration abuse.
      */
     public function admins(): JsonResponse
     {
@@ -58,45 +69,86 @@ class AuthController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => $request->password,
+                'phone' => $request->phone,
+                'date_of_birth' => $request->date_of_birth,
                 'status' => UserStatus::Pending,
+                'email_verified_at' => null,
             ]);
+
+            $code = $this->registrationOtp->issue($user->email);
+            $user->notify(new RegistrationOtp($code));
 
             return response()->json([
                 'success' => true,
-                'message' => 'Registration successful. Your account is pending approval from your managing admin.',
+                'message' => 'Registration started. Please verify your email with the code we sent.',
                 'data' => [
                     'user' => new UserResource($user->load(['role', 'admin'])),
                     'token' => null,
                     'pending' => true,
+                    'needs_verification' => true,
+                    'email' => $user->email,
                 ],
             ], 201);
         }
 
-        // Every self-registered web account becomes an Admin — the 'admin'
-        // slug, so it lands on the admin dashboard with full admin powers
-        // immediately. The role is fixed server-side (not chosen by the
-        // registrant) to avoid privilege escalation; elevated Super Admin
-        // access is still granted only through user management. An Agency
-        // link (agency_id) can be set later in user management.
+        // Web self-registration creates an Admin + Agency. Account stays Pending
+        // until email OTP is verified AND a Super Admin approves it.
+        // No Sanctum token is issued at registration.
         $defaultRole = Role::where('slug', 'admin')->first();
 
-        $user = User::create([
-            'role_id' => $defaultRole?->id,
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $request->password,
-            'status' => UserStatus::Active,
-        ]);
+        $user = DB::transaction(function () use ($request, $defaultRole) {
+            $agencyData = PsgcLocation::applyAddress([
+                'initials' => $request->initials,
+                'name' => $request->agency_name,
+                'type' => $request->type,
+                'contact' => $request->contact,
+                'email' => $request->agency_email,
+                'phone' => $request->phone,
+                'region_code' => $request->region_code,
+                'province_code' => $request->province_code,
+                'municipality_code' => $request->municipality_code,
+                'barangay_code' => $request->barangay_code,
+                'region_name' => $request->region_name,
+                'province_name' => $request->province_name,
+                'municipality_name' => $request->municipality_name,
+                'barangay_name' => $request->barangay_name,
+                'custom_address' => $request->custom_address,
+                'status' => 'Active',
+            ]);
 
-        $token = $this->authService->createToken($user);
+            $agency = Agency::create($agencyData);
+
+            $personalAddress = implode(', ', array_filter([
+                $agencyData['custom_address'] ?? null,
+                $agencyData['location'] ?? null,
+            ], fn ($value) => filled($value)));
+
+            return User::create([
+                'role_id' => $defaultRole?->id,
+                'agency_id' => $agency->id,
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => $request->password,
+                'phone' => $request->phone,
+                'date_of_birth' => $request->date_of_birth,
+                'address' => $personalAddress !== '' ? $personalAddress : null,
+                'status' => UserStatus::Pending,
+                'email_verified_at' => null,
+            ]);
+        });
+
+        $code = $this->registrationOtp->issue($user->email);
+        $user->notify(new RegistrationOtp($code));
 
         return response()->json([
             'success' => true,
-            'message' => 'Registration successful.',
+            'message' => 'Registration started. Please verify your email with the code we sent.',
             'data' => [
-                'user' => new UserResource($user->load('role')),
-                'token' => $token,
-                'pending' => false,
+                'user' => new UserResource($user->load(['role', 'agency'])),
+                'token' => null,
+                'pending' => true,
+                'needs_verification' => true,
+                'email' => $user->email,
             ],
         ], 201);
     }
@@ -113,12 +165,30 @@ class AuthController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
+        // Self-registered field users and admins must verify email via OTP
+        // before login / approval.
+        if ($user->email_verified_at === null && in_array($user->role?->slug, ['user', 'admin'], true)) {
+            Auth::logout();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Please verify your email with the code we sent before signing in.',
+                'data' => [
+                    'needs_verification' => true,
+                    'email' => $user->email,
+                ],
+            ], 403);
+        }
+
         if ($user->status !== UserStatus::Active) {
             Auth::logout();
 
-            $message = $user->status === UserStatus::Pending
-                ? 'Your account is awaiting approval from your managing admin.'
-                : 'Your account is not active.';
+            $message = 'Your account is not active.';
+            if ($user->status === UserStatus::Pending) {
+                $message = $user->isAdmin()
+                    ? 'Your account is awaiting approval from a Super Admin.'
+                    : 'Your account is awaiting approval from your managing admin.';
+            }
 
             return response()->json([
                 'success' => false,
@@ -158,6 +228,81 @@ class AuthController extends Controller
         ]);
     }
 
+    public function verifyRegistrationOtp(VerifyRegistrationOtpRequest $request): JsonResponse
+    {
+        $email = strtolower(trim($request->email));
+
+        $user = User::where('email', $email)
+            ->where('status', UserStatus::Pending)
+            ->whereNull('email_verified_at')
+            ->whereHas('role', fn ($q) => $q->whereIn('slug', ['user', 'admin']))
+            ->first();
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No pending registration found for this email.',
+            ], 422);
+        }
+
+        if (! $this->registrationOtp->verify($email, $request->code)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired verification code.',
+            ], 422);
+        }
+
+        // Email OTP only confirms ownership of the inbox. Activation is a
+        // separate human decision: Super Admin for self-registered admins,
+        // managing admin for field users.
+        $user->forceFill(['email_verified_at' => now()])->save();
+
+        $message = $user->isAdmin()
+            ? 'Email verified. Your account is pending approval from a Super Admin.'
+            : 'Email verified. Your account is pending approval from your managing admin.';
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => [
+                'user' => new UserResource($user->load(['role', 'admin', 'agency'])),
+                'token' => null,
+                'pending' => true,
+                'needs_verification' => false,
+            ],
+        ]);
+    }
+
+    public function resendRegistrationOtp(ResendRegistrationOtpRequest $request): JsonResponse
+    {
+        $email = strtolower(trim($request->email));
+
+        $user = User::where('email', $email)
+            ->where('status', UserStatus::Pending)
+            ->whereNull('email_verified_at')
+            ->whereHas('role', fn ($q) => $q->whereIn('slug', ['user', 'admin']))
+            ->first();
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No pending registration found for this email.',
+            ], 422);
+        }
+
+        $code = $this->registrationOtp->issue($user->email);
+        $user->notify(new RegistrationOtp($code));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'A new verification code has been sent to your email.',
+            'data' => [
+                'email' => $user->email,
+                'needs_verification' => true,
+            ],
+        ]);
+    }
+
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
         $status = Password::sendResetLink($request->only('email'));
@@ -180,8 +325,10 @@ class AuthController extends Controller
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password) {
+                // Assign the plain password; the User model's 'hashed' cast
+                // hashes once. Hash::make here would double-bcrypt and break login.
                 $user->forceFill([
-                    'password' => Hash::make($password),
+                    'password' => $password,
                     'remember_token' => Str::random(60),
                 ])->save();
 

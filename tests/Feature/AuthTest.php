@@ -25,10 +25,50 @@ class AuthTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'initials' => 'TU',
+            'agency_name' => 'Test Agency',
+            'type' => 'NGO',
+            'contact' => 'Test Contact',
+            'agency_email' => 'agency@example.com',
+            'phone' => '+63 917 000 0000',
+            'region_code' => '100000000',
+            'province_code' => '100430000',
+            'municipality_code' => '100431400',
+            'barangay_code' => '100431401',
+            'region_name' => 'Region X',
+            'province_name' => 'Misamis Oriental',
+            'municipality_name' => 'Tagoloan',
+            'barangay_name' => 'Poblacion',
+            'custom_address' => 'Near the plaza',
         ]);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['success', 'data' => ['user', 'token']]);
+            ->assertJsonPath('data.needs_verification', true)
+            ->assertJsonPath('data.pending', true)
+            ->assertJsonPath('data.token', null)
+            ->assertJsonStructure(['success', 'data' => ['user', 'token', 'email']]);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'test@example.com',
+            'phone' => '+63 917 000 0000',
+            'status' => 'pending',
+            'email_verified_at' => null,
+        ]);
+        $this->assertDatabaseHas('agencies', [
+            'name' => 'Test Agency',
+            'initials' => 'TU',
+            'status' => 'Active',
+        ]);
+
+        $user = User::where('email', 'test@example.com')->first();
+        $this->assertNotNull($user?->agency_id);
+        $this->assertSame('admin', $user->role?->slug);
+        $this->assertNull($user->email_verified_at);
+        $this->assertStringContainsString('Near the plaza', $user->address);
+        $this->assertStringContainsString('Poblacion', $user->address);
+        $this->assertStringContainsString('Tagoloan', $user->address);
+        $this->assertStringContainsString('Misamis Oriental', $user->address);
+        $this->assertStringContainsString('Region X', $user->address);
     }
 
     public function test_user_can_login(): void
@@ -60,6 +100,40 @@ class AuthTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data.email', $user->email);
+    }
+
+    public function test_field_user_can_register_with_phone_and_date_of_birth(): void
+    {
+        $adminRole = Role::where('slug', 'admin')->first();
+        $admin = User::create([
+            'role_id' => $adminRole->id,
+            'name' => 'Managing Admin',
+            'email' => 'admin@example.com',
+            'password' => Hash::make('password'),
+            'status' => 'active',
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->postJson('/api/auth/register', [
+            'name' => 'Field Worker',
+            'email' => 'field@example.com',
+            'password' => 'Password1!',
+            'password_confirmation' => 'Password1!',
+            'admin_id' => $admin->id,
+            'phone' => '+639171234567',
+            'date_of_birth' => '2000-06-15',
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.needs_verification', true)
+            ->assertJsonPath('data.email', 'field@example.com');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'field@example.com',
+            'admin_id' => $admin->id,
+            'phone' => '+639171234567',
+            'date_of_birth' => '2000-06-15',
+        ]);
     }
 
     private function createUser(string $roleSlug = 'user'): User

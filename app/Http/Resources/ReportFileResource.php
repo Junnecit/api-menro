@@ -17,9 +17,7 @@ class ReportFileResource extends JsonResource
             'size' => $this->size,
             'source' => $this->source,
             'source_key' => $this->source_key,
-            'url' => $this->path
-                ? $request->getSchemeAndHttpHost().'/storage/'.$this->path
-                : null,
+            'url' => null, // Use authenticated GET /api/report-center/files/{id}/download
             'created_at' => $this->created_at?->toISOString(),
             'deleted_at' => $this->deleted_at?->toISOString(),
         ];

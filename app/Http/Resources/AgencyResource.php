@@ -9,6 +9,10 @@ class AgencyResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $soilDocumentUrl = $this->soil_document_path
+            ? url('/api/agencies/'.$this->id.'/soil-document/download')
+            : null;
+
         return [
             'id' => $this->id,
             'initials' => $this->initials,
@@ -24,6 +28,9 @@ class AgencyResource extends JsonResource
             'location' => $this->location,
             'custom_address' => $this->custom_address,
             'soil_type' => $this->soil_type,
+            'soil_document_url' => $soilDocumentUrl,
+            'soil_document_name' => $this->soil_document_name,
+            'soil_document_mime' => $this->soil_document_mime,
             'color' => $this->color,
             'status' => $this->status,
             'requests_count' => $this->whenCounted('requests'),

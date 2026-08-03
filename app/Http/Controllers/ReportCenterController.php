@@ -259,11 +259,11 @@ class ReportCenterController extends Controller
     {
         $this->authorize('view', $report_file);
 
-        return response()->streamDownload(function () use ($report_file) {
-            echo \Illuminate\Support\Facades\Storage::disk('public')->get($report_file->path);
-        }, $report_file->name, [
-            'Content-Type' => $report_file->mime ?: 'application/octet-stream',
-        ]);
+        return \App\Support\PrivateStorage::streamDownload(
+            $report_file->path,
+            $report_file->name,
+            $report_file->mime,
+        );
     }
 
     public function saveMonitoringPdf(Request $request): JsonResponse

@@ -48,7 +48,7 @@ class PlantingRequestDocumentAnalyzer
     /**
      * Same as analyze(), but for store: images that fail quality/OCR hard-fail.
      *
-     * @return array{meta: array<string, mixed>}
+     * @return array{meta: array<string, mixed>, seedling_draft: array<string, mixed>|null}
      */
     public function extractForStore(UploadedFile $file): array
     {
@@ -57,6 +57,7 @@ class PlantingRequestDocumentAnalyzer
 
             return [
                 'meta' => $analysis['meta'],
+                'seedling_draft' => $analysis['seedling_draft'] ?? null,
             ];
         }
 
@@ -64,6 +65,7 @@ class PlantingRequestDocumentAnalyzer
 
         return [
             'meta' => $extracted['meta'] ?? [],
+            'seedling_draft' => $extracted['seedling_draft'] ?? null,
         ];
     }
 

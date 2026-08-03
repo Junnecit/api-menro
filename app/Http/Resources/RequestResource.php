@@ -11,7 +11,7 @@ class RequestResource extends JsonResource
     public function toArray(Request $request): array
     {
         $documentUrl = $this->document_path
-            ? $request->getSchemeAndHttpHost().'/storage/'.$this->document_path
+            ? url('/api/requests/'.$this->id.'/document/download')
             : null;
 
         $barangayName = $this->barangay_code
@@ -37,6 +37,7 @@ class RequestResource extends JsonResource
             'agency_id' => $this->agency_id,
             'requester_name' => $this->requester_name,
             'project_name' => $this->project_name,
+            'habitat' => $this->habitat?->value ?? 'terrestrial',
             'target_trees' => $this->target_trees,
             'barangay_code' => $this->barangay_code,
             'barangay_name' => $barangayName,

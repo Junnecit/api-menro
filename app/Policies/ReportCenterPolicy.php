@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ReportCenterPolicy
 {
-    // Report Center (including the file manager) is not available to the admin role.
+    // Shared workspace for Super Admins and field users; plain admins are excluded.
     public function viewAny(User $user): bool
     {
         return ! $user->isAdmin();

@@ -36,13 +36,13 @@ class ProfileController extends Controller
     public function uploadPhoto(UploadPhotoRequest $request): JsonResponse
     {
         $user = $request->user();
-        $path = $this->photoService->upload($user, $request->file('photo'));
+        $this->photoService->upload($user, $request->file('photo'));
 
         return response()->json([
             'success' => true,
             'message' => 'Profile photo uploaded successfully.',
             'data' => [
-                'profile_photo_url' => $request->getSchemeAndHttpHost().'/storage/'.$path,
+                'profile_photo_url' => \App\Support\SignedMediaUrl::profilePhoto($user->fresh()),
             ],
         ]);
     }
