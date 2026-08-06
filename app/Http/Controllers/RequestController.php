@@ -101,7 +101,7 @@ class RequestController extends Controller
     {
         $this->authorize('create', PlantingRequest::class);
 
-        $data = TagoloanLocation::applyBarangay($request->safe()->except('document'));
+        $data = TagoloanLocation::applyBarangay($request->safe()->except(['document', 'seedling_type']));
         if (empty($data['request_no'])) {
             $data['request_no'] = $this->generateRequestNo();
         }
@@ -125,6 +125,7 @@ class RequestController extends Controller
 
         $data['request_date'] = $data['request_date'] ?? now()->toDateString();
         $data['habitat'] = $data['habitat'] ?? PlantingHabitat::Terrestrial->value;
+        $data['seedling_draft'] = $this->seedlingDraftFromType($request->input('seedling_type'));
 
         // Document-only submissions do not collect barangay in the form; details
         // live in the uploaded file until a reviewer fills them in later.
@@ -167,12 +168,16 @@ class RequestController extends Controller
     {
         $this->authorize('update', $request);
 
-        $data = TagoloanLocation::applyBarangay($formRequest->safe()->except('document'));
+        $data = TagoloanLocation::applyBarangay($formRequest->safe()->except(['document', 'seedling_type']));
 
         // Only a Super Admin may change a request's status (approve, reject,
         // etc.). Admins can edit their own request details but not its status.
         if (! $formRequest->user()->isSuperAdmin()) {
             unset($data['status']);
+        }
+
+        if ($formRequest->exists('seedling_type')) {
+            $data['seedling_draft'] = $this->seedlingDraftFromType($formRequest->input('seedling_type'));
         }
 
         if (! empty($data)) {
@@ -340,5 +345,48 @@ class RequestController extends Controller
             ->max() ?? 0;
 
         return '#'.str_pad((string) ($latestNumber + 1), 5, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * @return array{species: list<string>, raw: string, source: string}|null
+     */
+    private function seedlingDraftFromType(mixed $raw): ?array
+    {
+        $text = trim((string) $raw);
+        if ($text === '') {
+            return null;
+        }
+
+        $parts = preg_split('/\s*(?:,|;|\/|\band\b|&)\s*/i', $text) ?: [];
+        $species = [];
+
+        foreach ($parts as $part) {
+            $cleaned = trim((string) $part);
+            if ($cleaned === '') {
+                continue;
+            }
+
+            $exists = false;
+            foreach ($species as $existing) {
+                if (mb_strtolower($existing) === mb_strtolower($cleaned)) {
+                    $exists = true;
+                    break;
+                }
+            }
+
+            if (! $exists) {
+                $species[] = $cleaned;
+            }
+        }
+
+        if ($species === []) {
+            return null;
+        }
+
+        return [
+            'species' => $species,
+            'raw' => $text,
+            'source' => 'form',
+        ];
     }
 }

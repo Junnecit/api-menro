@@ -25,6 +25,7 @@ class UserResource extends JsonResource
             'date_of_birth' => $this->date_of_birth?->format('Y-m-d'),
             'address' => $this->address,
             'profile_photo_url' => \App\Support\SignedMediaUrl::profilePhoto($this->resource),
+            'push_enabled' => (bool) ($this->push_enabled ?? true),
             'email_verified_at' => $this->email_verified_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

@@ -147,10 +147,13 @@ class TreeController extends Controller
             'updated_by_id' => $request->user()->id,
         ]);
 
+        $fresh = $tree->fresh()->load(self::RELATIONS);
+        app(\App\Services\TreeUpdateNotifier::class)->notifyRecorder($fresh, $request->user());
+
         return response()->json([
             'success' => true,
             'message' => 'Tree updated successfully.',
-            'data' => new TreeResource($tree->fresh()->load(self::RELATIONS)),
+            'data' => new TreeResource($fresh),
         ]);
     }
 

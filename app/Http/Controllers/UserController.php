@@ -74,9 +74,9 @@ class UserController extends Controller
 
         $data = $request->validated();
 
-        if ($role->slug === 'user') {
-            // A plain admin manages only their own pool, so every user they
-            // create is assigned to them; a Super Admin may pick any admin.
+        if ($role->needsManagingAdmin()) {
+            // A plain admin manages only their own pool, so every field user
+            // they create is assigned to them; a Super Admin may pick any admin.
             if ($request->user()->isAdmin()) {
                 $data['admin_id'] = $request->user()->id;
             }
@@ -138,12 +138,13 @@ class UserController extends Controller
             unset($data['password']);
         }
 
-        // A managing admin only makes sense for regular users. If this account
-        // is (or is becoming) an admin/super-admin, it cannot have a manager.
-        $targetRoleSlug = $request->filled('role_id')
-            ? Role::find($request->role_id)?->slug
-            : $user->role?->slug;
-        if ($targetRoleSlug !== 'user' && array_key_exists('admin_id', $data)) {
+        // A managing admin only makes sense for field roles (planter/monitor).
+        // Admins and Super Admins are not managed by anyone.
+        $targetRole = $request->filled('role_id')
+            ? Role::find($request->role_id)
+            : $user->role;
+        $targetRoleSlug = $targetRole?->slug;
+        if ($targetRole && ! $targetRole->needsManagingAdmin() && array_key_exists('admin_id', $data)) {
             $data['admin_id'] = null;
         }
 
@@ -157,6 +158,11 @@ class UserController extends Controller
         $user->update($data);
 
         if ($wasPending && $user->status === UserStatus::Active) {
+            // Approval implies the account may sign in; backfill verification so
+            // login is not blocked by a missing OTP step after activation.
+            if ($user->email_verified_at === null) {
+                $user->forceFill(['email_verified_at' => now()])->save();
+            }
             $user->notify(new UserApproved);
         }
 

@@ -26,8 +26,16 @@ class PlantingRequestDocumentService
             'document_path' => $path,
             'document_name' => $file->getClientOriginalName(),
             'document_mime' => $file->getClientMimeType(),
-            'seedling_draft' => null,
         ];
+
+        // Prefer an already-set form seedling type; otherwise keep what OCR/document extraction found.
+        $formDraft = $plantingRequest->seedling_draft;
+        $extractedDraft = $extracted['seedling_draft'] ?? null;
+        if ($this->hasSeedlingSpecies($formDraft)) {
+            $updates['seedling_draft'] = $formDraft;
+        } elseif ($extractedDraft !== null) {
+            $updates['seedling_draft'] = $extractedDraft;
+        }
 
         $metaBackfill = $this->metaBackfill($plantingRequest, $extracted['meta'] ?? []);
         if ($metaBackfill !== []) {
@@ -52,6 +60,20 @@ class PlantingRequestDocumentService
             'document_mime' => null,
             'seedling_draft' => null,
         ]);
+    }
+
+    /**
+     * @param  mixed  $draft
+     */
+    private function hasSeedlingSpecies(mixed $draft): bool
+    {
+        if (! is_array($draft)) {
+            return false;
+        }
+
+        $species = $draft['species'] ?? null;
+
+        return is_array($species) && $species !== [];
     }
 
     /**

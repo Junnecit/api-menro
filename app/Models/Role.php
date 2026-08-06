@@ -31,4 +31,20 @@ class Role extends Model
     {
         return in_array($this->slug, ['super-admin', 'admin'], true);
     }
+
+    public function isPlanter(): bool
+    {
+        return in_array($this->slug, ['user', 'other'], true);
+    }
+
+    public function isMonitor(): bool
+    {
+        return $this->slug === 'monitor';
+    }
+
+    /** Field roles that require a managing admin for agency-pool scoping. */
+    public function needsManagingAdmin(): bool
+    {
+        return in_array($this->slug, ['user', 'other', 'monitor'], true);
+    }
 }

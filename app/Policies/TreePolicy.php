@@ -19,16 +19,26 @@ class TreePolicy
 
     public function create(User $user): bool
     {
-        return true;
+        // Monitors sync/edit only; planters and admins plant.
+        return ! $user->isMonitor();
     }
 
     public function update(User $user, Tree $tree): bool
     {
+        // Planters become read-only after upload; monitors/admins may edit.
+        if ($user->isPlanter()) {
+            return false;
+        }
+
         return $this->owns($user, $tree);
     }
 
     public function delete(User $user, Tree $tree): bool
     {
+        if ($user->isPlanter()) {
+            return false;
+        }
+
         return $this->owns($user, $tree);
     }
 
@@ -36,7 +46,7 @@ class TreePolicy
      * A user may act on a tree only if they own it. Super Admins bypass the
      * ownership check entirely. An admin owns every tree recorded by a managed
      * user, plus every tree tagged with their agency. A managed field user may
-     * view/edit trees in their admin's agency pool. Unassigned users own only
+     * view trees in their admin's agency pool. Unassigned users own only
      * trees they recorded. Must stay in sync with Tree::scopeOwnedBy.
      */
     private function owns(User $user, Tree $tree): bool

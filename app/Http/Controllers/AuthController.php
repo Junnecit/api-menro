@@ -166,8 +166,13 @@ class AuthController extends Controller
         $user = Auth::user();
 
         // Self-registered field users and admins must verify email via OTP
-        // before login / approval.
-        if ($user->email_verified_at === null && in_array($user->role?->slug, ['user', 'admin'], true)) {
+        // before approval. Already-activated accounts must be able to sign in
+        // even if email_verified_at was never set (e.g. approved before OTP).
+        if (
+            $user->email_verified_at === null
+            && $user->status === UserStatus::Pending
+            && in_array($user->role?->slug, ['user', 'admin'], true)
+        ) {
             Auth::logout();
 
             return response()->json([

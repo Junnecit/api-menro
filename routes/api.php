@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AgencyController;
+use App\Http\Controllers\AppNotificationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GoogleAuthController;
@@ -52,6 +53,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('profile/photo', [ProfileController::class, 'uploadPhoto']);
     Route::delete('profile/photo', [ProfileController::class, 'removePhoto']);
     Route::get('users/options', [UserController::class, 'options']);
+
+    Route::get('notifications', [AppNotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [AppNotificationController::class, 'unreadCount']);
+    Route::post('notifications/read-all', [AppNotificationController::class, 'markAllRead']);
+    Route::post('notifications/{notification}/read', [AppNotificationController::class, 'markRead']);
+    Route::post('push-token', [AppNotificationController::class, 'registerPushToken']);
+    Route::put('push-preference', [AppNotificationController::class, 'updatePushPreference']);
 
     // User management is available to admins and super-admins. Ownership is
     // enforced by UserPolicy/scopeVisibleTo: a plain admin only ever sees and

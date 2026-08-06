@@ -15,7 +15,10 @@ class RoleSeeder extends Seeder
             // 'admin' slug (so it retains the full admin interface + powers).
             // Partner orgs are Agencies; this role may link to one via agency_id.
             ['name' => 'Admin', 'slug' => 'admin'],
-            ['name' => 'User', 'slug' => 'user'],
+            // Field planter: create trees, then read-only after upload.
+            ['name' => 'Planter', 'slug' => 'user'],
+            // Field monitor: agency-pool sync + edit; no tree create.
+            ['name' => 'Monitor', 'slug' => 'monitor'],
             ['name' => 'Other', 'slug' => 'other'],
         ];
 

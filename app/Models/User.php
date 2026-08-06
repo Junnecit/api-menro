@@ -33,11 +33,14 @@ class User extends Authenticatable implements MustVerifyEmail
         'profile_photo_path',
         'google_id',
         'email_verified_at',
+        'expo_push_token',
+        'push_enabled',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'expo_push_token',
     ];
 
     protected function casts(): array
@@ -47,6 +50,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'date_of_birth' => 'date',
             'password' => 'hashed',
             'status' => UserStatus::class,
+            'push_enabled' => 'boolean',
         ];
     }
 
@@ -190,6 +194,24 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isAdminOrAbove(): bool
     {
         return $this->role?->isAdminOrAbove() ?? false;
+    }
+
+    /** Field planter (`user`) or legacy `other` — may plant, not edit after upload. */
+    public function isPlanter(): bool
+    {
+        return in_array($this->role?->slug, ['user', 'other'], true);
+    }
+
+    /** Field monitor — agency-pool edit, no tree create. */
+    public function isMonitor(): bool
+    {
+        return $this->role?->slug === 'monitor';
+    }
+
+    /** Roles that belong under a managing admin (agency pool). */
+    public function needsManagingAdmin(): bool
+    {
+        return in_array($this->role?->slug, ['user', 'other', 'monitor'], true);
     }
 
     public function scopeSearch(Builder $query, ?string $search): Builder
