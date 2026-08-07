@@ -6,7 +6,7 @@ use App\Http\Requests\PlantingMonitoring\StorePlantingMonitoringRequest;
 use App\Http\Requests\PlantingMonitoring\UpdatePlantingMonitoringRequest;
 use App\Http\Resources\PlantingMonitoringResource;
 use App\Models\PlantingMonitoring;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\MonitoringReportPdfService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +14,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PlantingMonitoringController extends Controller
 {
+    public function __construct(private MonitoringReportPdfService $reportPdf) {}
+
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', PlantingMonitoring::class);
@@ -114,46 +116,15 @@ class PlantingMonitoringController extends Controller
         $this->authorize('viewAny', PlantingMonitoring::class);
 
         $query = $this->filteredQuery($request, PlantingMonitoring::query());
-        $totals = $this->computeTotals($query);
-        $records = $query->get();
 
-        $tempDir = storage_path('app/pdf-temp');
-        if (! is_dir($tempDir)) {
-            mkdir($tempDir, 0755, true);
-        }
-
-        $pdf = Pdf::setOptions([
-            // sys_get_temp_dir() can resolve to an unwritable system path
-            // (e.g. when TMP/TEMP env vars aren't set for the serving
-            // process), which silently drops any embedded image with no
-            // visible error. Point dompdf at a directory we know Laravel
-            // can write to. mergeWithDefaults=true keeps the rest of the
-            // package's default options (fonts, chroot, etc.) intact.
-            'temp_dir' => $tempDir,
-        ], true)->loadView('reports.planting-monitoring', [
-            'records' => $records,
-            'totals' => $totals,
-            'generatedAt' => now(),
-            'menroSealDataUri' => $this->imageToDataUri(public_path('images/menro-seal.png')),
-            'provinceSealDataUri' => $this->imageToDataUri(public_path('images/province-seal.png')),
-        ])->setPaper('legal', 'portrait');
+        $pdf = $this->reportPdf->make($query, [
+            'search' => $request->input('search'),
+            'agency_id' => $request->filled('agency_id') ? $request->integer('agency_id') : null,
+            'date_from' => $request->input('date_from'),
+            'date_to' => $request->input('date_to'),
+        ]);
 
         return $pdf->download('menro-planting-monitoring-report-'.now()->format('Y-m-d').'.pdf');
-    }
-
-    private function imageToDataUri(string $path): ?string
-    {
-        // dompdf's URL resolver misparses Windows drive-letter paths like
-        // "C:/Users/..." (parse_url() reads "C" as the URI scheme), which
-        // breaks its local-file and chroot handling. A base64 data URI
-        // skips that resolution path entirely, so it works cross-platform.
-        if (! file_exists($path)) {
-            return null;
-        }
-
-        $type = pathinfo($path, PATHINFO_EXTENSION) ?: 'png';
-
-        return 'data:image/'.$type.';base64,'.base64_encode(file_get_contents($path));
     }
 
     private function filteredQuery(Request $request, Builder $query): Builder
@@ -226,28 +197,6 @@ class PlantingMonitoringController extends Controller
 
     private function computeTotals(Builder $query): array
     {
-        // Use the base query builder (not the Eloquent builder) for the aggregate:
-        // selectRaw() alongside the existing with('request.agency') eager-load would
-        // otherwise try to hydrate a PlantingMonitoring model missing its primary key.
-        // reorder() drops the list ordering, which is meaningless on a single-row aggregate.
-        $sums = (clone $query)->toBase()->reorder()->selectRaw('
-            COALESCE(SUM(seedlings_planted), 0) as seedlings_planted,
-            COALESCE(SUM(replanted_count), 0) as replanted_count,
-            COALESCE(SUM(survived_count), 0) as survived_count,
-            COALESCE(SUM(died_count), 0) as died_count
-        ')->first();
-
-        $seedlingsPlanted = (int) $sums->seedlings_planted;
-        $survived = (int) $sums->survived_count;
-
-        return [
-            'seedlings_planted' => $seedlingsPlanted,
-            'replanted_count' => (int) $sums->replanted_count,
-            'survived_count' => $survived,
-            'died_count' => (int) $sums->died_count,
-            'survival_rate' => $seedlingsPlanted > 0
-                ? round($survived / $seedlingsPlanted * 100, 2)
-                : 0.0,
-        ];
+        return $this->reportPdf->computeTotals($query);
     }
 }

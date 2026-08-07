@@ -11,6 +11,7 @@ class Request extends Model
     use SoftDeletes;
 
     protected $fillable = [
+        'parent_id',
         'user_id',
         'request_no',
         'agency_id',
@@ -24,6 +25,7 @@ class Request extends Model
         'document_path',
         'document_name',
         'document_mime',
+        'document_hash',
         'seedling_draft',
         'status',
         'request_date',
@@ -46,9 +48,64 @@ class Request extends Model
         return $this->belongsTo(User::class)->withTrashed();
     }
 
+    public function parent()
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
     public function trees()
     {
         return $this->hasMany(Tree::class, 'request_id');
+    }
+
+    /**
+     * Top-level list rows (parents and standalone singles).
+     */
+    public function scopeRoots($query)
+    {
+        return $query->whereNull('parent_id');
+    }
+
+    /**
+     * Real planting rows — excludes empty shell parents (no document, no trees).
+     */
+    public function scopeOperational($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNotNull('document_path')
+                ->orWhereHas('trees')
+                ->orWhereDoesntHave('children');
+        });
+    }
+
+    /**
+     * True when this row only groups children and has no planting payload of its own.
+     */
+    public function isEmptyShell(): bool
+    {
+        $hasChildren = $this->relationLoaded('children')
+            ? $this->children->isNotEmpty()
+            : $this->children()->exists();
+
+        if (! $hasChildren) {
+            return false;
+        }
+
+        if ($this->document_path) {
+            return false;
+        }
+
+        return ! $this->trees()->exists();
+    }
+
+    public function isParentShell(): bool
+    {
+        return $this->isEmptyShell();
     }
 
     /**

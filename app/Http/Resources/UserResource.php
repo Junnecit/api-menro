@@ -20,6 +20,10 @@ class UserResource extends JsonResource
             // Field users inherit agency from their managing admin.
             'effective_agency_id' => $this->effectiveAgencyId(),
             'agency' => new AgencyResource($this->whenLoaded('agency')),
+            'managed_users_count' => $this->relationLoaded('managedUsers')
+                ? $this->managedUsers->count()
+                : $this->whenCounted('managedUsers'),
+            'managed_users' => UserResource::collection($this->whenLoaded('managedUsers')),
             'status' => $this->status?->value ?? $this->status,
             'phone' => $this->phone,
             'date_of_birth' => $this->date_of_birth?->format('Y-m-d'),

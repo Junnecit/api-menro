@@ -6,17 +6,21 @@ use App\Models\Agency;
 use App\Models\PlantingMonitoring;
 use App\Models\ReportFile;
 use App\Models\ReportFolder;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportAgencyFolderSyncService
 {
-    public function __construct(private ReportFileService $fileService) {}
+    private const AREA_DATA_FOLDER_NAME = 'Area Data';
+
+    public function __construct(
+        private ReportFileService $fileService,
+        private MonitoringReportPdfService $reportPdf,
+    ) {}
 
     /**
-     * Create one root folder per agency that has monitoring records, then
-     * place a PDF for each monitoring record inside that agency folder.
+     * Create one root folder per agency, ensure an Area Data child folder,
+     * then place a PDF for each monitoring record inside Area Data.
      *
-     * @return array{folders_created:int,folders_reused:int,files_created:int,files_skipped:int}
+     * @return array{folders_created:int,folders_reused:int,files_created:int,files_skipped:int,files_moved:int}
      */
     public function sync(?int $userId = null): array
     {
@@ -25,6 +29,7 @@ class ReportAgencyFolderSyncService
             'folders_reused' => 0,
             'files_created' => 0,
             'files_skipped' => 0,
+            'files_moved' => 0,
         ];
 
         $agencyIds = PlantingMonitoring::query()
@@ -42,7 +47,15 @@ class ReportAgencyFolderSyncService
             ->get();
 
         foreach ($agencies as $agency) {
-            $folder = $this->findOrCreateAgencyFolder($agency, $userId, $stats);
+            $agencyFolder = $this->findOrCreateAgencyFolder($agency, $userId, $stats);
+            $areaDataFolder = $this->findOrCreateChildFolder(
+                $agencyFolder,
+                self::AREA_DATA_FOLDER_NAME,
+                $userId,
+                $stats,
+            );
+
+            $this->migrateAgencyRootMonitoringPdfs($agencyFolder, $areaDataFolder, $stats);
 
             $monitorings = PlantingMonitoring::query()
                 ->with('request.agency')
@@ -53,7 +66,7 @@ class ReportAgencyFolderSyncService
             foreach ($monitorings as $monitoring) {
                 $sourceKey = 'monitoring:'.$monitoring->id;
                 $existing = ReportFile::query()
-                    ->where('folder_id', $folder->id)
+                    ->where('folder_id', $areaDataFolder->id)
                     ->where('source_key', $sourceKey)
                     ->first();
 
@@ -62,7 +75,7 @@ class ReportAgencyFolderSyncService
                     continue;
                 }
 
-                $pdfBinary = $this->renderMonitoringPdf(
+                $pdfBinary = $this->reportPdf->output(
                     PlantingMonitoring::query()
                         ->with('request.agency')
                         ->whereKey($monitoring->id)
@@ -74,7 +87,7 @@ class ReportAgencyFolderSyncService
                 $name = trim($requestNo.' - '.$safeSeedling).'.pdf';
 
                 $this->fileService->storeGeneratedPdf(
-                    $folder->id,
+                    $areaDataFolder->id,
                     $pdfBinary,
                     $name,
                     $userId,
@@ -94,10 +107,39 @@ class ReportAgencyFolderSyncService
             ->get();
 
         foreach ($remaining as $agency) {
-            $this->findOrCreateAgencyFolder($agency, $userId, $stats);
+            $agencyFolder = $this->findOrCreateAgencyFolder($agency, $userId, $stats);
+            $this->findOrCreateChildFolder(
+                $agencyFolder,
+                self::AREA_DATA_FOLDER_NAME,
+                $userId,
+                $stats,
+            );
         }
 
         return $stats;
+    }
+
+    /**
+     * Move legacy monitoring PDFs that still sit directly under the agency
+     * folder into that agency's Area Data folder.
+     */
+    private function migrateAgencyRootMonitoringPdfs(
+        ReportFolder $agencyFolder,
+        ReportFolder $areaDataFolder,
+        array &$stats,
+    ): void {
+        $legacyFiles = ReportFile::query()
+            ->where('folder_id', $agencyFolder->id)
+            ->where(function ($q) {
+                $q->where('source', 'monitoring-pdf')
+                    ->orWhere('source_key', 'like', 'monitoring:%');
+            })
+            ->get();
+
+        foreach ($legacyFiles as $file) {
+            $file->update(['folder_id' => $areaDataFolder->id]);
+            $stats['files_moved']++;
+        }
     }
 
     private function findOrCreateAgencyFolder(Agency $agency, ?int $userId, array &$stats): ReportFolder
@@ -133,51 +175,30 @@ class ReportAgencyFolderSyncService
         ]);
     }
 
-    private function renderMonitoringPdf($query): string
-    {
-        $records = $query->orderByDesc('date_monitoring')->orderByDesc('id')->get();
+    private function findOrCreateChildFolder(
+        ReportFolder $parent,
+        string $name,
+        ?int $userId,
+        array &$stats,
+    ): ReportFolder {
+        $folder = ReportFolder::query()
+            ->where('parent_id', $parent->id)
+            ->where('name', $name)
+            ->first();
 
-        $sums = (clone $query)->toBase()->reorder()->selectRaw('
-            COALESCE(SUM(seedlings_planted), 0) as seedlings_planted,
-            COALESCE(SUM(replanted_count), 0) as replanted_count,
-            COALESCE(SUM(survived_count), 0) as survived_count,
-            COALESCE(SUM(died_count), 0) as died_count
-        ')->first();
+        if ($folder) {
+            $stats['folders_reused']++;
 
-        $seedlingsPlanted = (int) $sums->seedlings_planted;
-        $survived = (int) $sums->survived_count;
-        $totals = [
-            'seedlings_planted' => $seedlingsPlanted,
-            'replanted_count' => (int) $sums->replanted_count,
-            'survived_count' => $survived,
-            'died_count' => (int) $sums->died_count,
-            'survival_rate' => $seedlingsPlanted > 0
-                ? round($survived / $seedlingsPlanted * 100, 2)
-                : 0.0,
-        ];
-
-        $tempDir = storage_path('app/pdf-temp');
-        if (! is_dir($tempDir)) {
-            mkdir($tempDir, 0755, true);
+            return $folder;
         }
 
-        return Pdf::setOptions(['temp_dir' => $tempDir], true)->loadView('reports.planting-monitoring', [
-            'records' => $records,
-            'totals' => $totals,
-            'generatedAt' => now(),
-            'menroSealDataUri' => $this->imageToDataUri(public_path('images/menro-seal.png')),
-            'provinceSealDataUri' => $this->imageToDataUri(public_path('images/province-seal.png')),
-        ])->setPaper('legal', 'portrait')->output();
-    }
+        $stats['folders_created']++;
 
-    private function imageToDataUri(string $path): ?string
-    {
-        if (! file_exists($path)) {
-            return null;
-        }
-
-        $type = pathinfo($path, PATHINFO_EXTENSION) ?: 'png';
-
-        return 'data:image/'.$type.';base64,'.base64_encode(file_get_contents($path));
+        return ReportFolder::create([
+            'name' => $name,
+            'parent_id' => $parent->id,
+            'agency_id' => $parent->agency_id,
+            'created_by' => $userId,
+        ]);
     }
 }

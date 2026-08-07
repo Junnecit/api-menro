@@ -21,10 +21,31 @@ class PlantingRequestTemplateService
 
     public function buildDocxBinary(): string
     {
+        return $this->packageDocx($this->documentXml());
+    }
+
+    /**
+     * Build a filled copy of the official template (same labels/layout, with values).
+     *
+     * @param  array{
+     *   project_name: string,
+     *   target_trees: int|string,
+     *   seedling_type: string,
+     *   barangay: string,
+     *   notes?: string
+     * }  $fields
+     */
+    public function buildFilledDocxBinary(array $fields): string
+    {
+        return $this->packageDocx($this->filledDocumentXml($fields));
+    }
+
+    private function packageDocx(string $documentXml): string
+    {
         return SimpleZip::create([
             '[Content_Types].xml' => $this->contentTypesXml(),
             '_rels/.rels' => $this->relsXml(),
-            'word/document.xml' => $this->documentXml(),
+            'word/document.xml' => $documentXml,
             'word/_rels/document.xml.rels' => $this->documentRelsXml(),
         ]);
     }
@@ -61,7 +82,48 @@ XML;
 
     private function documentXml(): string
     {
-        $lines = [
+        return $this->wrapDocumentBody($this->templateLines());
+    }
+
+    /**
+     * @param  array{
+     *   project_name: string,
+     *   target_trees: int|string,
+     *   seedling_type: string,
+     *   barangay: string,
+     *   notes?: string
+     * }  $fields
+     */
+    private function filledDocumentXml(array $fields): string
+    {
+        $notes = trim((string) ($fields['notes'] ?? ''));
+        if ($notes === '') {
+            $notes = 'Community-based tree planting activity in Tagoloan, Misamis Oriental.';
+        }
+
+        return $this->wrapDocumentBody([
+            'MENRO TAGOLOAN — PLANTING REQUEST',
+            '',
+            'Fill in the blanks below. Keep the labels exactly as written so request fields can autofill.',
+            '',
+            'Project Name: '.$fields['project_name'],
+            'Target Trees: '.$fields['target_trees'],
+            'Type of Seedling: '.$fields['seedling_type'],
+            'Barangay: '.$fields['barangay'],
+            'Municipality: Tagoloan',
+            '',
+            'Notes / Purpose:',
+            $notes,
+            '',
+        ]);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function templateLines(): array
+    {
+        return [
             'MENRO TAGOLOAN — PLANTING REQUEST',
             '',
             'Fill in the blanks below. Keep the labels exactly as written so request fields can autofill.',
@@ -76,7 +138,13 @@ XML;
             '____________________________________________________________',
             '____________________________________________________________',
         ];
+    }
 
+    /**
+     * @param  list<string>  $lines
+     */
+    private function wrapDocumentBody(array $lines): string
+    {
         $paragraphs = '';
         foreach ($lines as $line) {
             $escaped = htmlspecialchars($line, ENT_XML1 | ENT_QUOTES, 'UTF-8');

@@ -37,7 +37,7 @@ class UserController extends Controller
         $this->authorize('viewAny', User::class);
 
         return $this->paginatedResponse(
-            $this->filteredQuery($request, User::query())
+            $this->filteredQuery($request, User::query(), trashed: false)
         );
     }
 
@@ -46,7 +46,7 @@ class UserController extends Controller
         $this->authorize('viewAny', User::class);
 
         return $this->paginatedResponse(
-            $this->filteredQuery($request, User::onlyTrashed())
+            $this->filteredQuery($request, User::onlyTrashed(), trashed: true)
         );
     }
 
@@ -221,15 +221,88 @@ class UserController extends Controller
         ]);
     }
 
-    private function filteredQuery(Request $request, \Illuminate\Database\Eloquent\Builder $query)
+    private function filteredQuery(Request $request, \Illuminate\Database\Eloquent\Builder $query, bool $trashed = false)
     {
-        // admin + agency power the Ownership column in the web user table:
-        // who manages a field user, and which agency an admin represents.
-        return $query->with(['role', 'admin:id,name', 'agency:id,name'])
-            ->visibleTo($request->user())
-            ->search($request->query('search'))
-            ->roleSlug($request->query('role'))
-            ->status($request->query('status'))
+        // Directory lists show admin/super-admin roots with nested planters
+        // (managed_users), matching the planting-request parent/child UX.
+        // Nested payloads are for the unfiltered/paginated directory; role=
+        // filters (e.g. admins picker) stay flat.
+        $nest = ! $request->filled('role') && ! $request->boolean('flat');
+
+        if ($nest) {
+            $query->where(function ($q) {
+                $q->whereHas('role', fn ($r) => $r->whereIn('slug', ['super-admin', 'admin']))
+                    ->orWhere(function ($orphan) {
+                        // Unassigned field users still appear as standalone roots.
+                        $orphan->whereNull('admin_id')
+                            ->whereHas('role', fn ($r) => $r->whereIn('slug', ['user', 'monitor', 'other']));
+                    });
+            });
+
+            $query->with([
+                'role',
+                'admin:id,name',
+                'agency:id,name',
+                'managedUsers' => function ($managed) use ($trashed) {
+                    if ($trashed) {
+                        $managed->onlyTrashed();
+                    }
+                    $managed->with(['role', 'admin:id,name', 'agency:id,name'])
+                        ->orderBy('name');
+                },
+            ]);
+        } else {
+            $query->with(['role', 'admin:id,name', 'agency:id,name']);
+        }
+
+        $query->visibleTo($request->user());
+
+        if ($request->filled('status')) {
+            $status = $request->string('status')->toString();
+            if ($nest) {
+                $query->where(function ($q) use ($status, $trashed) {
+                    $q->where('status', $status)
+                        ->orWhereHas('managedUsers', function ($child) use ($status, $trashed) {
+                            if ($trashed) {
+                                $child->onlyTrashed();
+                            }
+                            $child->where('status', $status);
+                        });
+                });
+            } else {
+                $query->status($status);
+            }
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->string('search')->toString();
+            $query->where(function ($q) use ($search, $nest, $trashed) {
+                $q->where(function ($inner) use ($search) {
+                    $inner->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+
+                if ($nest) {
+                    $q->orWhereHas('managedUsers', function ($child) use ($search, $trashed) {
+                        if ($trashed) {
+                            $child->onlyTrashed();
+                        }
+                        $child->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+                }
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->roleSlug($request->query('role'));
+        }
+
+        // Pin Super Admin first, then newest accounts.
+        return $query
+            ->orderByRaw("CASE WHEN EXISTS (
+                SELECT 1 FROM roles WHERE roles.id = users.role_id AND roles.slug = 'super-admin'
+            ) THEN 0 ELSE 1 END")
             ->latest();
     }
 

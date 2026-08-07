@@ -3,15 +3,24 @@
 namespace App\Http\Requests\PlantingRequest;
 
 use App\Enums\PlantingHabitat;
+use App\Support\PlantingRequestUniqueness;
 use App\Support\TagoloanLocation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdatePlantingRequestRequest extends FormRequest
 {
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('project_name') && is_string($this->input('project_name'))) {
+            $this->merge(['project_name' => trim($this->input('project_name'))]);
+        }
     }
 
     public function rules(): array
@@ -50,6 +59,21 @@ class UpdatePlantingRequestRequest extends FormRequest
             ])],
             'request_date' => ['sometimes', 'required', 'date'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $ignoreId = $this->route('request')?->id;
+
+        $validator->after(function (Validator $validator) use ($ignoreId) {
+            if ($this->exists('project_name')) {
+                PlantingRequestUniqueness::validateProjectName($validator, $ignoreId);
+            }
+
+            if ($this->hasFile('document')) {
+                PlantingRequestUniqueness::validateDocument($validator, 'document', $ignoreId);
+            }
+        });
     }
 
     public function messages(): array

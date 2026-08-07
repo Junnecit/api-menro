@@ -100,10 +100,10 @@ class WipeAllData extends Command
         );
 
         $this->newLine();
-        $this->info('Demo logins (password: password):');
+        $this->info('Demo login (password: password):');
         $this->line('  - superadmin@example.com');
-        $this->line('  - admin@example.com');
-        $this->line('  - user@example.com');
+        $this->line('  - admin.<slug>@tagoloan.demo  (after TagoloanPartnerSeeder)');
+        $this->line('  - planter1.<slug>@tagoloan.demo … planter10.<slug>@tagoloan.demo');
 
         return self::SUCCESS;
     }

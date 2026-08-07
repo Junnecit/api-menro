@@ -16,6 +16,7 @@ use App\Support\TagoloanLocation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -70,7 +71,7 @@ class RequestController extends Controller
         $this->authorize('viewAny', PlantingRequest::class);
 
         return $this->paginatedResponse(
-            $this->filteredQuery($request, PlantingRequest::onlyTrashed()),
+            $this->filteredQuery($request, PlantingRequest::onlyTrashed(), trash: true),
             $request
         );
     }
@@ -149,7 +150,7 @@ class RequestController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => new RequestResource($request->load(['agency', 'user'])),
+            'data' => new RequestResource($request->load(['agency', 'user', 'children.agency', 'children.user'])),
         ]);
     }
 
@@ -199,7 +200,10 @@ class RequestController extends Controller
     {
         $this->authorize('delete', $request);
 
-        $request->delete();
+        DB::transaction(function () use ($request) {
+            $request->children()->get()->each->delete();
+            $request->delete();
+        });
 
         return response()->json([
             'success' => true,
@@ -212,12 +216,20 @@ class RequestController extends Controller
         $plantingRequest = PlantingRequest::onlyTrashed()->findOrFail($id);
         $this->authorize('restore', $plantingRequest);
 
-        $plantingRequest->restore();
+        DB::transaction(function () use ($plantingRequest) {
+            $plantingRequest->restore();
+            PlantingRequest::onlyTrashed()
+                ->where('parent_id', $plantingRequest->id)
+                ->get()
+                ->each->restore();
+        });
 
         return response()->json([
             'success' => true,
             'message' => 'Planting request restored successfully.',
-            'data' => new RequestResource($plantingRequest->fresh()->load(['agency', 'user'])),
+            'data' => new RequestResource(
+                $plantingRequest->fresh()->load(['agency', 'user', 'children.agency', 'children.user'])
+            ),
         ]);
     }
 
@@ -226,8 +238,19 @@ class RequestController extends Controller
         $plantingRequest = PlantingRequest::onlyTrashed()->findOrFail($id);
         $this->authorize('forceDelete', $plantingRequest);
 
-        $this->documentService->deleteFile($plantingRequest);
-        $plantingRequest->forceDelete();
+        DB::transaction(function () use ($plantingRequest) {
+            $children = PlantingRequest::onlyTrashed()
+                ->where('parent_id', $plantingRequest->id)
+                ->get();
+
+            foreach ($children as $child) {
+                $this->documentService->deleteFile($child);
+                $child->forceDelete();
+            }
+
+            $this->documentService->deleteFile($plantingRequest);
+            $plantingRequest->forceDelete();
+        });
 
         return response()->json([
             'success' => true,
@@ -250,9 +273,10 @@ class RequestController extends Controller
         return $user->agencyPoolUserIds();
     }
 
-    private function filteredQuery(Request $request, Builder $query): Builder
+    private function filteredQuery(Request $request, Builder $query, bool $trash = false): Builder
     {
         $user = $request->user();
+        $forPlanting = $request->boolean('for_planting');
 
         $query = $query->with(['agency', 'user'])
             ->orderByDesc('request_date')
@@ -260,7 +284,7 @@ class RequestController extends Controller
 
         // Mobile field users need Approved/In Progress requests from their
         // admin's agency pool (not only their own submissions).
-        if ($request->boolean('for_planting')) {
+        if ($forPlanting) {
             $poolIds = $this->plantingPoolUserIds($user);
             $agencyId = $user->effectiveAgencyId();
 
@@ -279,6 +303,9 @@ class RequestController extends Controller
                 }
             }
 
+            // Planting targets real leaf requests, never shell parents.
+            $query->operational();
+
             if ($request->filled('status')) {
                 $query->where('status', $request->string('status'));
             } else {
@@ -287,29 +314,80 @@ class RequestController extends Controller
         } else {
             $query->ownedBy($user);
 
+            if ($trash) {
+                // Parent shells, or children trashed while their parent is still active.
+                $query->where(function ($q) {
+                    $q->whereNull('parent_id')
+                        ->orWhereHas('parent');
+                });
+
+                $query->with([
+                    'children' => fn ($children) => $children
+                        ->onlyTrashed()
+                        ->with(['agency', 'user'])
+                        ->orderByDesc('request_date')
+                        ->orderByDesc('id'),
+                ]);
+            } else {
+                $query->roots();
+
+                $query->with([
+                    'children' => fn ($children) => $children
+                        ->with(['agency', 'user'])
+                        ->orderByDesc('request_date')
+                        ->orderByDesc('id'),
+                ]);
+            }
+
             if ($request->filled('status')) {
-                $query->where('status', $request->string('status'));
+                $status = $request->string('status')->toString();
+                $query->where(function ($q) use ($status, $trash) {
+                    $q->where('status', $status)
+                        ->orWhereHas('children', function ($c) use ($status, $trash) {
+                            if ($trash) {
+                                $c->onlyTrashed();
+                            }
+                            $c->where('status', $status);
+                        });
+                });
             }
         }
 
         if ($request->filled('search')) {
-            $search = $request->string('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('request_no', 'like', "%{$search}%")
-                    ->orWhere('project_name', 'like', "%{$search}%")
-                    ->orWhere('location', 'like', "%{$search}%")
-                    ->orWhere('requester_name', 'like', "%{$search}%")
-                    ->orWhere('custom_address', 'like', "%{$search}%")
-                    ->orWhere('document_name', 'like', "%{$search}%")
-                    ->orWhereHas('agency', fn ($agencyQuery) => $agencyQuery->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('user', function ($userQuery) use ($search) {
-                        $userQuery->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
+            $search = $request->string('search')->toString();
+            $query->where(function ($q) use ($search, $forPlanting, $trash) {
+                $this->applyRequestSearch($q, $search);
+
+                // Web lists are roots-only: still surface a parent when a child matches.
+                if (! $forPlanting) {
+                    $q->orWhereHas('children', function ($childQuery) use ($search, $trash) {
+                        if ($trash) {
+                            $childQuery->onlyTrashed();
+                        }
+                        $this->applyRequestSearch($childQuery, $search);
                     });
+                }
             });
         }
 
         return $query;
+    }
+
+    private function applyRequestSearch(Builder $query, string $search): void
+    {
+        $query->where(function ($q) use ($search) {
+            $q->where('request_no', 'like', "%{$search}%")
+                ->orWhere('project_name', 'like', "%{$search}%")
+                ->orWhere('location', 'like', "%{$search}%")
+                ->orWhere('requester_name', 'like', "%{$search}%")
+                ->orWhere('custom_address', 'like', "%{$search}%")
+                ->orWhere('document_name', 'like', "%{$search}%")
+                ->orWhereHas('agency', fn ($agencyQuery) => $agencyQuery->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('user', function ($userQuery) use ($search) {
+                    $userQuery->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+        });
     }
 
     private function paginatedResponse(Builder $query, Request $request): JsonResponse

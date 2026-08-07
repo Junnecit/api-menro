@@ -11,9 +11,9 @@ use App\Http\Resources\ReportFolderResource;
 use App\Models\PlantingMonitoring;
 use App\Models\ReportFile;
 use App\Models\ReportFolder;
+use App\Services\MonitoringReportPdfService;
 use App\Services\ReportAgencyFolderSyncService;
 use App\Services\ReportFileService;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +24,7 @@ class ReportCenterController extends Controller
     public function __construct(
         private ReportFileService $fileService,
         private ReportAgencyFolderSyncService $agencyFolderSync,
+        private MonitoringReportPdfService $reportPdf,
     ) {}
 
     public function syncAgencyFolders(Request $request): JsonResponse
@@ -34,7 +35,7 @@ class ReportCenterController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Agency folders synced successfully.',
+            'message' => 'Agency folders synced successfully. Monitoring PDFs are filed under each agency\'s Area Data folder.',
             'data' => $stats,
         ]);
     }
@@ -306,45 +307,19 @@ class ReportCenterController extends Controller
             $query->whereDate('date_monitoring', '<=', $request->date('date_to'));
         }
 
-        $records = $query->get();
-        $sums = (clone $query)->toBase()->reorder()->selectRaw('
-            COALESCE(SUM(seedlings_planted), 0) as seedlings_planted,
-            COALESCE(SUM(replanted_count), 0) as replanted_count,
-            COALESCE(SUM(survived_count), 0) as survived_count,
-            COALESCE(SUM(died_count), 0) as died_count
-        ')->first();
-
-        $seedlingsPlanted = (int) $sums->seedlings_planted;
-        $survived = (int) $sums->survived_count;
-        $totals = [
-            'seedlings_planted' => $seedlingsPlanted,
-            'replanted_count' => (int) $sums->replanted_count,
-            'survived_count' => $survived,
-            'died_count' => (int) $sums->died_count,
-            'survival_rate' => $seedlingsPlanted > 0
-                ? round($survived / $seedlingsPlanted * 100, 2)
-                : 0.0,
-        ];
-
-        $tempDir = storage_path('app/pdf-temp');
-        if (! is_dir($tempDir)) {
-            mkdir($tempDir, 0755, true);
-        }
-
-        $pdf = Pdf::setOptions(['temp_dir' => $tempDir], true)->loadView('reports.planting-monitoring', [
-            'records' => $records,
-            'totals' => $totals,
-            'generatedAt' => now(),
-            'menroSealDataUri' => $this->imageToDataUri(public_path('images/menro-seal.png')),
-            'provinceSealDataUri' => $this->imageToDataUri(public_path('images/province-seal.png')),
-        ])->setPaper('legal', 'portrait');
+        $pdfBinary = $this->reportPdf->output($query, [
+            'search' => $request->input('search'),
+            'agency_id' => $request->filled('agency_id') ? $request->integer('agency_id') : null,
+            'date_from' => $request->input('date_from'),
+            'date_to' => $request->input('date_to'),
+        ]);
 
         $name = $request->input('name')
             ?: 'menro-planting-monitoring-report-'.now()->format('Y-m-d').'.pdf';
 
         $file = $this->fileService->storeGeneratedPdf(
             $request->integer('folder_id') ?: null,
-            $pdf->output(),
+            $pdfBinary,
             $name,
             $request->user()->id,
         );
@@ -395,16 +370,5 @@ class ReportCenterController extends Controller
         }
 
         $folder->forceDelete();
-    }
-
-    private function imageToDataUri(string $path): ?string
-    {
-        if (! file_exists($path)) {
-            return null;
-        }
-
-        $type = pathinfo($path, PATHINFO_EXTENSION) ?: 'png';
-
-        return 'data:image/'.$type.';base64,'.base64_encode(file_get_contents($path));
     }
 }

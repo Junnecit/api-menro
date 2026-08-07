@@ -20,6 +20,7 @@ class RequestResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'parent_id' => $this->parent_id,
             'request_no' => $this->request_no,
             'user_id' => $this->user_id,
             'submitted_by' => $this->whenLoaded('user', function () {
@@ -53,6 +54,10 @@ class RequestResource extends JsonResource
             'request_date' => $this->request_date?->toDateString(),
             'created_at' => $this->created_at?->toISOString(),
             'deleted_at' => $this->deleted_at?->toISOString(),
+            'children_count' => $this->relationLoaded('children')
+                ? $this->children->count()
+                : $this->whenCounted('children'),
+            'children' => RequestResource::collection($this->whenLoaded('children')),
         ];
     }
 }

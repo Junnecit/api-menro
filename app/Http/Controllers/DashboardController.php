@@ -18,24 +18,36 @@ class DashboardController extends Controller
 
         // Request KPIs are scoped to the current account (Super Admin sees all
         // via the ownedBy scope). Fresh queries per stat keep the counts and
-        // the recent list independent.
+        // the recent list independent. Operational = leaf/single plantings
+        // (excludes shell parents that only group children).
         return response()->json([
             'success' => true,
             'data' => [
-                'total_requests' => PlantingRequest::ownedBy($user)->count(),
-                'pending_requests' => PlantingRequest::ownedBy($user)->where('status', 'Pending')->count(),
-                'completed_requests' => PlantingRequest::ownedBy($user)->where('status', 'Completed')->count(),
+                'total_requests' => PlantingRequest::ownedBy($user)->operational()->count(),
+                'pending_requests' => PlantingRequest::ownedBy($user)->operational()->where('status', 'Pending')->count(),
+                'completed_requests' => PlantingRequest::ownedBy($user)->operational()->where('status', 'Completed')->count(),
                 'agencies_count' => Agency::count(),
                 'recent_requests' => RequestResource::collection(
                     PlantingRequest::ownedBy($user)
-                        ->with(['agency', 'user'])
+                        ->roots()
+                        ->with([
+                            'agency',
+                            'user',
+                            'children' => fn ($children) => $children
+                                ->with(['agency', 'user'])
+                                ->orderByDesc('request_date')
+                                ->orderByDesc('id'),
+                        ])
                         ->orderByDesc('request_date')
                         ->orderByDesc('id')
                         ->limit(5)
                         ->get()
                 ),
                 'agencies' => AgencyResource::collection(
-                    Agency::withCount('requests')->orderBy('name')->limit(4)->get()
+                    Agency::withCount(['requests' => fn ($q) => $q->operational()])
+                        ->orderBy('name')
+                        ->limit(4)
+                        ->get()
                 ),
                 'agency_comparison' => $this->agencyComparison(),
             ],
@@ -50,10 +62,17 @@ class DashboardController extends Controller
      */
     private function agencyComparison(int $limit = 10): array
     {
+        // Count operational (leaf) requests only — exclude shell parents.
         $rows = Agency::query()
             ->leftJoin('requests', function ($join) {
                 $join->on('agencies.id', '=', 'requests.agency_id')
-                    ->whereNull('requests.deleted_at');
+                    ->whereNull('requests.deleted_at')
+                    ->whereNotExists(function ($sub) {
+                        $sub->select(DB::raw(1))
+                            ->from('requests as child_requests')
+                            ->whereColumn('child_requests.parent_id', 'requests.id')
+                            ->whereNull('child_requests.deleted_at');
+                    });
             })
             ->whereNull('agencies.deleted_at')
             ->groupBy('agencies.id', 'agencies.name', 'agencies.initials', 'agencies.color')

@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\PlantingRequest;
 
+use App\Support\PlantingRequestUniqueness;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class AnalyzePlantingRequestDocumentRequest extends FormRequest
 {
@@ -20,7 +22,20 @@ class AnalyzePlantingRequestDocumentRequest extends FormRequest
                 'mimes:pdf,doc,docx,jpg,jpeg,png,webp',
                 'max:10240',
             ],
+            // When replacing a document on edit, ignore the current request's hash.
+            'ignore_request_id' => ['nullable', 'integer', 'exists:requests,id'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $ignoreId = $this->filled('ignore_request_id')
+            ? $this->integer('ignore_request_id')
+            : null;
+
+        $validator->after(function (Validator $validator) use ($ignoreId) {
+            PlantingRequestUniqueness::validateDocument($validator, 'document', $ignoreId);
+        });
     }
 
     public function messages(): array

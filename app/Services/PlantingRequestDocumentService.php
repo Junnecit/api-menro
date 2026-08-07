@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Request as PlantingRequest;
+use App\Support\PlantingRequestUniqueness;
 use App\Support\PrivateStorage;
 use App\Support\TagoloanLocation;
 use Illuminate\Http\UploadedFile;
@@ -26,6 +27,7 @@ class PlantingRequestDocumentService
             'document_path' => $path,
             'document_name' => $file->getClientOriginalName(),
             'document_mime' => $file->getClientMimeType(),
+            'document_hash' => PlantingRequestUniqueness::hashFile($file),
         ];
 
         // Prefer an already-set form seedling type; otherwise keep what OCR/document extraction found.
@@ -58,6 +60,7 @@ class PlantingRequestDocumentService
             'document_path' => null,
             'document_name' => null,
             'document_mime' => null,
+            'document_hash' => null,
             'seedling_draft' => null,
         ]);
     }

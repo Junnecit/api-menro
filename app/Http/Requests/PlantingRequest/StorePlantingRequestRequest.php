@@ -3,15 +3,24 @@
 namespace App\Http\Requests\PlantingRequest;
 
 use App\Enums\PlantingHabitat;
+use App\Support\PlantingRequestUniqueness;
 use App\Support\TagoloanLocation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StorePlantingRequestRequest extends FormRequest
 {
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('project_name') && is_string($this->input('project_name'))) {
+            $this->merge(['project_name' => trim($this->input('project_name'))]);
+        }
     }
 
     public function rules(): array
@@ -44,6 +53,14 @@ class StorePlantingRequestRequest extends FormRequest
             ])],
             'request_date' => ['nullable', 'date'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            PlantingRequestUniqueness::validateProjectName($validator);
+            PlantingRequestUniqueness::validateDocument($validator);
+        });
     }
 
     public function messages(): array
