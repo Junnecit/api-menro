@@ -23,8 +23,6 @@ class TagoloanPartnerSeeder extends Seeder
 
     private const PROVINCE_CODE = '104300000';
 
-    private const TREES_PER_REQUEST = 50;
-
     /**
      * Deterministic unique demo password per email (must match scripts/generate_demo_accounts_pdf.py).
      */
@@ -299,22 +297,43 @@ class TagoloanPartnerSeeder extends Seeder
                 );
             }
 
+            $targetTreesA = rand(15, 25) * 2 + 1;
+            $targetTreesB = rand(15, 25) * 2 + 1;
+
+            $numSpeciesA = rand(1, 2);
+            $numSpeciesB = rand(1, 2);
+
+            $catalogKeys = array_keys($speciesCatalog);
+            shuffle($catalogKeys);
+            
+            $speciesA = array_slice($catalogKeys, 0, $numSpeciesA);
+            $speciesB = array_slice($catalogKeys, $numSpeciesA, $numSpeciesB);
+
+            $seedlingTypeA = implode(', ', array_map(fn($k) => $speciesCatalog[$k]['common_name'], $speciesA));
+            $seedlingTypeB = implode(', ', array_map(fn($k) => $speciesCatalog[$k]['common_name'], $speciesB));
+
             $requestDefs = [
                 [
-                    'suffix' => 'A',
-                    'project' => "{$partner['name']} Reforestation Phase A",
-                    'habitat' => PlantingHabitat::Terrestrial,
-                    'status' => 'Approved',
-                    'barangay_code' => $partner['barangay_code'],
-                    'phase' => 0.0,
+                    'suffix'         => 'A',
+                    'project'        => "{$partner['name']} Reforestation Phase A",
+                    'habitat'        => PlantingHabitat::Terrestrial,
+                    'status'         => 'Approved',
+                    'barangay_code'  => $partner['barangay_code'],
+                    'phase'          => 0.0,
+                    'target_trees'   => $targetTreesA,
+                    'species_keys'   => $speciesA,
+                    'seedling_type'  => $seedlingTypeA,
                 ],
                 [
-                    'suffix' => 'B',
-                    'project' => "{$partner['name']} Upland Phase B",
-                    'habitat' => PlantingHabitat::Terrestrial,
-                    'status' => 'In Progress',
-                    'barangay_code' => $partner['barangay_code'],
-                    'phase' => M_PI,
+                    'suffix'         => 'B',
+                    'project'        => "{$partner['name']} Upland Phase B",
+                    'habitat'        => PlantingHabitat::Terrestrial,
+                    'status'         => 'In Progress',
+                    'barangay_code'  => $partner['barangay_code'],
+                    'phase'          => M_PI,
+                    'target_trees'   => $targetTreesB,
+                    'species_keys'   => $speciesB,
+                    'seedling_type'  => $seedlingTypeB,
                 ],
             ];
 
@@ -326,7 +345,11 @@ class TagoloanPartnerSeeder extends Seeder
                 $barangayCode = $reqDef['barangay_code'];
                 $barangayName = TagoloanLocation::barangayName($barangayCode) ?? 'Poblacion';
 
-                $seedlingType = 'Narra, Mahogany, Molave, Agoho';
+                $seedlingType = $reqDef['seedling_type'];
+                $requestSpecies = array_map(fn($k) => $speciesCatalog[$k], $reqDef['species_keys']);
+                $speciesSliceSize = count($requestSpecies);
+                $targetTrees = $reqDef['target_trees'];
+
                 $documentMeta = $this->storeFilledRequestDocument(
                     requestNo: $requestNo,
                     agencyIndex: $agencyIndex,
@@ -335,6 +358,7 @@ class TagoloanPartnerSeeder extends Seeder
                     barangayName: $barangayName,
                     seedlingType: $seedlingType,
                     requesterName: $partner['admin_name'],
+                    targetTrees: $targetTrees,
                 );
 
                 $plantingRequest = PlantingRequest::updateOrCreate(
@@ -346,7 +370,7 @@ class TagoloanPartnerSeeder extends Seeder
                         'requester_name' => $partner['admin_name'],
                         'project_name' => $reqDef['project'],
                         'habitat' => $reqDef['habitat'],
-                        'target_trees' => self::TREES_PER_REQUEST,
+                        'target_trees' => $targetTrees,
                         'barangay_code' => $barangayCode,
                         'location' => TagoloanLocation::formatLocation($barangayCode),
                         'document_path' => $documentMeta['path'],
@@ -354,9 +378,9 @@ class TagoloanPartnerSeeder extends Seeder
                         'document_mime' => $documentMeta['mime'],
                         'document_hash' => $documentMeta['hash'],
                         'seedling_draft' => [
-                            'species' => array_column(array_slice($speciesCatalog, 0, 4), 'common_name'),
-                            'raw' => $seedlingType,
-                            'source' => 'document',
+                            'species' => array_column($requestSpecies, 'common_name'),
+                            'raw'     => $seedlingType,
+                            'source'  => 'document',
                         ],
                         'status' => $reqDef['status'],
                         'request_date' => $parentRequestDate,
@@ -365,40 +389,42 @@ class TagoloanPartnerSeeder extends Seeder
 
                 $createdBySuffix[$reqDef['suffix']] = $plantingRequest;
 
-                for ($t = 1; $t <= self::TREES_PER_REQUEST; $t++) {
+                $deadCount = rand(1, 3) * 2 + 1; // 3, 5, or 7
+                $needReplacementCount = rand(1, 3) * 2 + 1; // 3, 5, or 7
+
+                for ($t = 1; $t <= $targetTrees; $t++) {
                     $clientUuid = sprintf('seed-t%02d-%s-%02d', $agencyIndex, strtolower($reqDef['suffix']), $t);
-                    $species = $speciesCatalog[($t - 1) % count($speciesCatalog)];
+                    $species = $requestSpecies[($t - 1) % $speciesSliceSize];
                     $planter = $planters[($t - 1) % count($planters)];
                     $point = $this->spiralPoint(
                         $hub['lat'],
                         $hub['lng'],
                         $t,
-                        self::TREES_PER_REQUEST,
+                        $targetTrees,
                         $reqDef['phase']
                     );
 
-                    // ~90 alive, 5 dead, 5 need_replacement per agency (spread across both requests)
                     $status = match (true) {
-                        $reqDef['suffix'] === 'A' && $t <= 3 => TreeStatus::Dead,
-                        $reqDef['suffix'] === 'B' && $t <= 2 => TreeStatus::Dead,
-                        $reqDef['suffix'] === 'A' && $t <= 5 => TreeStatus::NeedReplacement,
-                        $reqDef['suffix'] === 'B' && $t <= 5 => TreeStatus::NeedReplacement,
+                        $t <= $deadCount => TreeStatus::Dead,
+                        $t <= $deadCount + $needReplacementCount => TreeStatus::NeedReplacement,
                         default => TreeStatus::Alive,
                     };
 
-                    $plantedOn = Carbon::now()->subDays(60 - (($agencyIndex + $t) % 50));
+                    $plantedOn  = Carbon::now()->subDays(60 - (($agencyIndex + $t) % 50));
+                    // Individual recording date: each tree index gets a unique date_recorded.
+                    $recordedOn = $plantedOn->copy()->addDays($t);
 
                     $tree = Tree::updateOrCreate(
                         ['client_uuid' => $clientUuid],
                         [
-                            'request_id' => $plantingRequest->id,
-                            'agency_id' => $agency->id,
-                            'recorded_by_id' => $planter->id,
-                            'species' => $species['species'],
-                            'common_name' => $species['common_name'],
-                            'status' => $status,
-                            'date_planted' => $plantedOn->toDateString(),
-                            'date_recorded' => $plantedOn->copy()->addDay()->toDateString(),
+                            'request_id'      => $plantingRequest->id,
+                            'agency_id'       => $agency->id,
+                            'recorded_by_id'  => $planter->id,
+                            'species'         => $species['species'],
+                            'common_name'     => $species['common_name'],
+                            'status'          => $status,
+                            'date_planted'    => $plantedOn->toDateString(),
+                            'date_recorded'   => $recordedOn->toDateString(),
                             'barangay' => $barangayName,
                             'municipality' => 'Tagoloan',
                             'province' => 'Misamis Oriental',
@@ -417,30 +443,43 @@ class TagoloanPartnerSeeder extends Seeder
                 }
 
                 // Report Center KPIs come from planting_monitorings (not tree rows).
-                $alive = Tree::query()
-                    ->where('request_id', $plantingRequest->id)
-                    ->where('status', TreeStatus::Alive)
-                    ->count();
-                $dead = Tree::query()
-                    ->where('request_id', $plantingRequest->id)
-                    ->where('status', TreeStatus::Dead)
-                    ->count();
-                $needReplacement = Tree::query()
-                    ->where('request_id', $plantingRequest->id)
-                    ->where('status', TreeStatus::NeedReplacement)
-                    ->count();
+                foreach ($requestSpecies as $speciesInfo) {
+                    $speciesName = $speciesInfo['common_name'];
 
-                PlantingMonitoring::updateOrCreate(
-                    ['request_id' => $plantingRequest->id],
-                    [
-                        'seedling_type' => $seedlingType,
-                        'date_monitoring' => Carbon::now()->subDays(7 + $agencyIndex)->toDateString(),
-                        'seedlings_planted' => self::TREES_PER_REQUEST,
-                        'replanted_count' => $needReplacement,
-                        'survived_count' => $alive,
-                        'died_count' => $dead,
-                    ]
-                );
+                    $alive = Tree::query()
+                        ->where('request_id', $plantingRequest->id)
+                        ->where('common_name', $speciesName)
+                        ->where('status', TreeStatus::Alive)
+                        ->count();
+                    $dead = Tree::query()
+                        ->where('request_id', $plantingRequest->id)
+                        ->where('common_name', $speciesName)
+                        ->where('status', TreeStatus::Dead)
+                        ->count();
+                    $needReplacement = Tree::query()
+                        ->where('request_id', $plantingRequest->id)
+                        ->where('common_name', $speciesName)
+                        ->where('status', TreeStatus::NeedReplacement)
+                        ->count();
+                    $total = Tree::query()
+                        ->where('request_id', $plantingRequest->id)
+                        ->where('common_name', $speciesName)
+                        ->count();
+
+                    PlantingMonitoring::updateOrCreate(
+                        [
+                            'request_id' => $plantingRequest->id,
+                            'seedling_type' => $speciesName,
+                        ],
+                        [
+                            'date_monitoring' => Carbon::now()->subDays(7 + $agencyIndex)->toDateString(),
+                            'seedlings_planted' => $total,
+                            'replanted_count' => $needReplacement,
+                            'survived_count' => $alive,
+                            'died_count' => $dead,
+                        ]
+                    );
+                }
             }
 
             // With 2 requests: In Progress (B) is the list anchor (keeps its document + seed);
@@ -460,7 +499,7 @@ class TagoloanPartnerSeeder extends Seeder
                 });
         }
 
-        $this->command?->info('Tagoloan partners seeded: 10 inland agency clusters, 10 admins, 100 planters, 20 requests (In Progress anchors + Approved sub-requests), 1000 trees, 20 planting monitorings (Report Center).');
+        $this->command?->info('Tagoloan partners seeded: 10 inland agency clusters, 10 admins, 100 planters, 20 requests (In Progress anchors + Approved sub-requests), randomized odd number of trees, 20 planting monitorings (Report Center).');
     }
 
     /**
@@ -476,12 +515,13 @@ class TagoloanPartnerSeeder extends Seeder
         string $barangayName,
         string $seedlingType,
         string $requesterName,
+        int $targetTrees = 50,
     ): array {
         $templateService = app(PlantingRequestTemplateService::class);
 
         $binary = $templateService->buildFilledDocxBinary([
             'project_name' => $projectName,
-            'target_trees' => self::TREES_PER_REQUEST,
+            'target_trees' => $targetTrees,
             'seedling_type' => $seedlingType,
             'barangay' => $barangayName,
             'notes' => sprintf(

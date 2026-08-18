@@ -12,11 +12,11 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('request_id')
-                  ->unique()
                   ->constrained('requests')
                   ->cascadeOnDelete();
 
             $table->string('seedling_type');
+            $table->unique(['request_id', 'seedling_type']);
             $table->date('date_monitoring')->nullable();
             $table->unsignedInteger('seedlings_planted')->default(0);
             $table->unsignedInteger('replanted_count')->default(0);

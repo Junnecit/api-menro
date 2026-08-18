@@ -119,6 +119,7 @@ class PlantingMonitoringController extends Controller
 
         $pdf = $this->reportPdf->make($query, [
             'search' => $request->input('search'),
+            'seedling_type' => $request->input('seedling_type'),
             'agency_id' => $request->filled('agency_id') ? $request->integer('agency_id') : null,
             'date_from' => $request->input('date_from'),
             'date_to' => $request->input('date_to'),
@@ -146,6 +147,10 @@ class PlantingMonitoringController extends Controller
             });
         }
 
+        if ($request->filled('seedling_type')) {
+            $query->where('seedling_type', 'like', '%' . $request->string('seedling_type') . '%');
+        }
+
         if ($request->filled('agency_id')) {
             $agencyId = $request->integer('agency_id');
             $query->whereHas('request', fn ($rq) => $rq->where('agency_id', $agencyId));
@@ -161,6 +166,10 @@ class PlantingMonitoringController extends Controller
 
         if ($request->filled('date_to')) {
             $query->whereDate('date_monitoring', '<=', $request->date('date_to'));
+        }
+
+        if ($request->filled('ids') && is_array($request->input('ids'))) {
+            $query->whereIn('id', $request->input('ids'));
         }
 
         return $query;

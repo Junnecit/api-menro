@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\AgencyResource;
 use App\Http\Resources\RequestResource;
 use App\Models\Agency;
 use App\Models\Request as PlantingRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -16,41 +16,47 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        // Request KPIs are scoped to the current account (Super Admin sees all
-        // via the ownedBy scope). Fresh queries per stat keep the counts and
-        // the recent list independent. Operational = leaf/single plantings
-        // (excludes shell parents that only group children).
+        // Cache per-user for 60 seconds so rapid refreshes don't re-query.
+        $cacheKey = "dashboard:stats:{$user->id}";
+        $data = Cache::remember($cacheKey, 60, function () use ($user) {
+            // One query for all three KPI counts instead of three separate ones.
+            $counts = PlantingRequest::ownedBy($user)
+                ->operational()
+                ->selectRaw("
+                    COUNT(*) as total_requests,
+                    SUM(status = 'Pending')   as pending_requests,
+                    SUM(status = 'Completed') as completed_requests
+                ")
+                ->first();
+
+            $recentRequests = PlantingRequest::ownedBy($user)
+                ->roots()
+                ->with([
+                    'agency',
+                    'user',
+                    'children' => fn ($children) => $children
+                        ->with(['agency', 'user'])
+                        ->orderByDesc('request_date')
+                        ->orderByDesc('id'),
+                ])
+                ->orderByDesc('request_date')
+                ->orderByDesc('id')
+                ->limit(5)
+                ->get();
+
+            return [
+                'total_requests'     => (int) ($counts->total_requests ?? 0),
+                'pending_requests'   => (int) ($counts->pending_requests ?? 0),
+                'completed_requests' => (int) ($counts->completed_requests ?? 0),
+                'agencies_count'     => Agency::count(),
+                'recent_requests'    => RequestResource::collection($recentRequests),
+                'agency_comparison'  => $this->agencyComparison(),
+            ];
+        });
+
         return response()->json([
             'success' => true,
-            'data' => [
-                'total_requests' => PlantingRequest::ownedBy($user)->operational()->count(),
-                'pending_requests' => PlantingRequest::ownedBy($user)->operational()->where('status', 'Pending')->count(),
-                'completed_requests' => PlantingRequest::ownedBy($user)->operational()->where('status', 'Completed')->count(),
-                'agencies_count' => Agency::count(),
-                'recent_requests' => RequestResource::collection(
-                    PlantingRequest::ownedBy($user)
-                        ->roots()
-                        ->with([
-                            'agency',
-                            'user',
-                            'children' => fn ($children) => $children
-                                ->with(['agency', 'user'])
-                                ->orderByDesc('request_date')
-                                ->orderByDesc('id'),
-                        ])
-                        ->orderByDesc('request_date')
-                        ->orderByDesc('id')
-                        ->limit(5)
-                        ->get()
-                ),
-                'agencies' => AgencyResource::collection(
-                    Agency::withCount(['requests' => fn ($q) => $q->operational()])
-                        ->orderBy('name')
-                        ->limit(4)
-                        ->get()
-                ),
-                'agency_comparison' => $this->agencyComparison(),
-            ],
+            'data'    => $data,
         ]);
     }
 
