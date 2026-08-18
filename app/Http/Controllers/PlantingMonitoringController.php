@@ -6,6 +6,7 @@ use App\Http\Requests\PlantingMonitoring\StorePlantingMonitoringRequest;
 use App\Http\Requests\PlantingMonitoring\UpdatePlantingMonitoringRequest;
 use App\Http\Resources\PlantingMonitoringResource;
 use App\Models\PlantingMonitoring;
+use App\Models\Tree;
 use App\Services\MonitoringReportPdfService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -15,6 +16,56 @@ use Symfony\Component\HttpFoundation\Response;
 class PlantingMonitoringController extends Controller
 {
     public function __construct(private MonitoringReportPdfService $reportPdf) {}
+
+    public function seedlingTypes(): JsonResponse
+    {
+        $this->authorize('viewAny', PlantingMonitoring::class);
+
+        $dbTypes = PlantingMonitoring::query()
+            ->select('seedling_type')
+            ->distinct()
+            ->whereNotNull('seedling_type')
+            ->where('seedling_type', '!=', '')
+            ->pluck('seedling_type')
+            ->all();
+
+        $treeSpecies = Tree::query()
+            ->select('species', 'common_name')
+            ->distinct()
+            ->get()
+            ->flatMap(function ($t) {
+                return array_filter([$t->common_name, $t->species]);
+            })
+            ->all();
+
+        $curatedCatalog = [
+            'Narra', 'Mahogany', 'Molave', 'Agoho', 'Talisay', 'Acacia',
+            'Gmelina', 'Jackfruit', 'Bakauan', 'Mangrove', 'Tindalo', 'Ipil',
+            'Bamboo', 'Falcata', 'Kamagong', 'Banaba', 'Teak', 'Bagras',
+            'Yemane', 'Rubber', 'Cacao', 'Coffee', 'Guyabano', 'Avocado',
+            'Mango', 'Balayong', 'Dao', 'Toog', 'Bitaog', 'Katmon', 'Lauan',
+            'Almon', 'Apitong', 'Dungon', 'Kalumpit', 'Kupang', 'Malapapaya', 'Tuai',
+        ];
+
+        $speciesMap = [];
+        foreach (array_merge($dbTypes, $treeSpecies, $curatedCatalog) as $item) {
+            $trimmed = trim((string) $item);
+            if ($trimmed !== '') {
+                $key = strtolower($trimmed);
+                if (!isset($speciesMap[$key])) {
+                    $speciesMap[$key] = $trimmed;
+                }
+            }
+        }
+
+        $sortedSpecies = array_values($speciesMap);
+        natcasesort($sortedSpecies);
+
+        return response()->json([
+            'success' => true,
+            'data' => array_values($sortedSpecies),
+        ]);
+    }
 
     public function index(Request $request): JsonResponse
     {

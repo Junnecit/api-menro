@@ -92,6 +92,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('requests/{request}/document', [RequestController::class, 'update']);
     Route::get('requests/{request}/document/download', [RequestController::class, 'downloadDocument']);
     Route::apiResource('requests', RequestController::class);
+    Route::get('planting-monitorings/seedling-types', [PlantingMonitoringController::class, 'seedlingTypes']);
     Route::get('planting-monitorings/trash', [PlantingMonitoringController::class, 'trash']);
     Route::post('planting-monitorings/{id}/restore', [PlantingMonitoringController::class, 'restore']);
     Route::delete('planting-monitorings/{id}/force', [PlantingMonitoringController::class, 'forceDestroy']);
