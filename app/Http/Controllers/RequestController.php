@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\PlantingRequestPdfService;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -26,11 +27,16 @@ class RequestController extends Controller
         private PlantingRequestDocumentService $documentService,
         private PlantingRequestTemplateService $templateService,
         private PlantingRequestDocumentAnalyzer $documentAnalyzer,
+        private PlantingRequestPdfService $pdfService,
     ) {}
 
-    public function documentTemplate(): Response
+    public function documentTemplate(Request $request): Response
     {
         $this->authorize('viewAny', PlantingRequest::class);
+
+        if ($request->query('format') === 'pdf') {
+            return $this->pdfTemplate();
+        }
 
         $binary = $this->templateService->buildDocxBinary();
 
@@ -39,6 +45,43 @@ class RequestController extends Controller
             'Content-Disposition' => 'attachment; filename="'.$this->templateService->filename().'"',
             'Content-Length' => (string) strlen($binary),
         ]);
+    }
+
+    public function pdfTemplate(): Response
+    {
+        $this->authorize('viewAny', PlantingRequest::class);
+
+        $pdf = $this->pdfService->makeBlankTemplatePdf();
+
+        return $pdf->download('MENRO-Planting-Request-Template.pdf');
+    }
+
+    public function exportPdf(PlantingRequest $request): Response
+    {
+        $this->authorize('view', $request);
+
+        $pdf = $this->pdfService->makeRequestPdf($request);
+
+        $slug = preg_replace('/[^A-Za-z0-9_-]/', '-', $request->request_no ?: 'REQ-'.$request->id);
+
+        return $pdf->download('MENRO-Planting-Request-'.$slug.'.pdf');
+    }
+
+    public function exportSummaryPdf(Request $request): Response
+    {
+        $this->authorize('viewAny', PlantingRequest::class);
+
+        $query = $this->filteredQuery($request, PlantingRequest::query());
+
+        $pdf = $this->pdfService->makeRequestsSummaryPdf($query, [
+            'search' => $request->input('search'),
+            'status' => $request->input('status'),
+            'agency_id' => $request->filled('agency_id') ? $request->integer('agency_id') : null,
+            'date_from' => $request->input('date_from'),
+            'date_to' => $request->input('date_to'),
+        ]);
+
+        return $pdf->download('MENRO-Planting-Requests-Summary-'.now()->format('Y-m-d').'.pdf');
     }
 
     public function analyzeDocument(AnalyzePlantingRequestDocumentRequest $request): JsonResponse
@@ -314,52 +357,64 @@ class RequestController extends Controller
         } else {
             $query->ownedBy($user);
 
-            if ($trash) {
-                // Parent shells, or children trashed while their parent is still active.
-                $query->where(function ($q) {
-                    $q->whereNull('parent_id')
-                        ->orWhereHas('parent');
-                });
+            $isFlat = $request->boolean('flat');
 
-                $query->with([
-                    'children' => fn ($children) => $children
-                        ->onlyTrashed()
-                        ->with(['agency', 'user'])
-                        ->orderByDesc('request_date')
-                        ->orderByDesc('id'),
-                ]);
+            if ($isFlat) {
+                if ($trash) {
+                    $query->onlyTrashed();
+                }
+
+                if ($request->filled('status')) {
+                    $query->where('status', $request->string('status'));
+                }
             } else {
-                $query->roots();
+                if ($trash) {
+                    // Parent shells, or children trashed while their parent is still active.
+                    $query->where(function ($q) {
+                        $q->whereNull('parent_id')
+                            ->orWhereHas('parent');
+                    });
 
-                $query->with([
-                    'children' => fn ($children) => $children
-                        ->with(['agency', 'user'])
-                        ->orderByDesc('request_date')
-                        ->orderByDesc('id'),
-                ]);
-            }
+                    $query->with([
+                        'children' => fn ($children) => $children
+                            ->onlyTrashed()
+                            ->with(['agency', 'user'])
+                            ->orderByDesc('request_date')
+                            ->orderByDesc('id'),
+                    ]);
+                } else {
+                    $query->roots();
 
-            if ($request->filled('status')) {
-                $status = $request->string('status')->toString();
-                $query->where(function ($q) use ($status, $trash) {
-                    $q->where('status', $status)
-                        ->orWhereHas('children', function ($c) use ($status, $trash) {
-                            if ($trash) {
-                                $c->onlyTrashed();
-                            }
-                            $c->where('status', $status);
-                        });
-                });
+                    $query->with([
+                        'children' => fn ($children) => $children
+                            ->with(['agency', 'user'])
+                            ->orderByDesc('request_date')
+                            ->orderByDesc('id'),
+                    ]);
+                }
+
+                if ($request->filled('status')) {
+                    $status = $request->string('status')->toString();
+                    $query->where(function ($q) use ($status, $trash) {
+                        $q->where('status', $status)
+                            ->orWhereHas('children', function ($c) use ($status, $trash) {
+                                if ($trash) {
+                                    $c->onlyTrashed();
+                                }
+                                $c->where('status', $status);
+                            });
+                    });
+                }
             }
         }
 
         if ($request->filled('search')) {
             $search = $request->string('search')->toString();
-            $query->where(function ($q) use ($search, $forPlanting, $trash) {
+            $query->where(function ($q) use ($search, $forPlanting, $trash, $isFlat) {
                 $this->applyRequestSearch($q, $search);
 
                 // Web lists are roots-only: still surface a parent when a child matches.
-                if (! $forPlanting) {
+                if (! $forPlanting && ! ($isFlat ?? false)) {
                     $q->orWhereHas('children', function ($childQuery) use ($search, $trash) {
                         if ($trash) {
                             $childQuery->onlyTrashed();
@@ -368,6 +423,22 @@ class RequestController extends Controller
                     });
                 }
             });
+        }
+
+        if ($request->filled('agency_id')) {
+            $agencyId = $request->integer('agency_id');
+            $query->where(function ($q) use ($agencyId) {
+                $q->where('agency_id', $agencyId)
+                    ->orWhereHas('children', fn ($c) => $c->where('agency_id', $agencyId));
+            });
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('request_date', '>=', $request->input('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('request_date', '<=', $request->input('date_to'));
         }
 
         return $query;

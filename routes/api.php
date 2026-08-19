@@ -85,12 +85,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('agencies', AgencyController::class);
     Route::get('requests/trash', [RequestController::class, 'trash']);
     Route::get('requests/document-template', [RequestController::class, 'documentTemplate']);
+    Route::get('requests/template/pdf', [RequestController::class, 'pdfTemplate']);
     Route::post('requests/analyze-document', [RequestController::class, 'analyzeDocument']);
     Route::post('requests/{id}/restore', [RequestController::class, 'restore']);
     Route::delete('requests/{id}/force', [RequestController::class, 'forceDestroy']);
     // Multipart document replace (browsers cannot attach files to PUT reliably).
     Route::post('requests/{request}/document', [RequestController::class, 'update']);
     Route::get('requests/{request}/document/download', [RequestController::class, 'downloadDocument']);
+    Route::get('requests/{request}/pdf', [RequestController::class, 'exportPdf']);
+    Route::get('reports/requests/pdf', [RequestController::class, 'exportSummaryPdf']);
     Route::apiResource('requests', RequestController::class);
     Route::get('planting-monitorings/seedling-types', [PlantingMonitoringController::class, 'seedlingTypes']);
     Route::get('planting-monitorings/trash', [PlantingMonitoringController::class, 'trash']);
