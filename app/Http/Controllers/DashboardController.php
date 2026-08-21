@@ -49,7 +49,7 @@ class DashboardController extends Controller
                 'pending_requests'   => (int) ($counts->pending_requests ?? 0),
                 'completed_requests' => (int) ($counts->completed_requests ?? 0),
                 'agencies_count'     => Agency::count(),
-                'recent_requests'    => RequestResource::collection($recentRequests),
+                'recent_requests'    => RequestResource::collection($recentRequests)->resolve(),
                 'agency_comparison'  => $this->agencyComparison(),
             ];
         });

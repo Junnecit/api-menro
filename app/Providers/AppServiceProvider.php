@@ -85,20 +85,19 @@ class AppServiceProvider extends ServiceProvider
         // logo (see App\Mail\EmbedsMenroLogo) on top of the default content.
         ResetPassword::toMailUsing(function ($notifiable, string $token) {
             $url = call_user_func(ResetPassword::$createUrlCallback, $notifiable, $token);
-            $expireMinutes = config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
+            $expireMinutes = config('auth.passwords.'.config('auth.defaults.passwords').'.expire', 60);
             $supportEmail = config('mail.from.address');
+            $userName = $notifiable->name ?? 'User';
 
             return EmbedsMenroLogo::embed(
                 (new MailMessage)
-                    ->subject('Reset your password')
-                    ->greeting('Reset your password')
-                    ->line('You are receiving this email because we received a password reset request for your account.')
-                    ->action('Reset Password', $url)
-                    ->line("This password reset link will expire in {$expireMinutes} minutes.")
-                    ->line('If you did not request a password reset, no further action is required.')
-                    ->line('---')
-                    ->line("Having trouble with your account? [Contact us](mailto:{$supportEmail})")
-                    ->salutation("Best,\nMENRO Tagoloan team")
+                    ->subject('Reset Your MENRO Account Password')
+                    ->markdown('emails.reset-password', [
+                        'userName' => $userName,
+                        'actionUrl' => $url,
+                        'expireMinutes' => $expireMinutes,
+                        'supportEmail' => $supportEmail,
+                    ])
             );
         });
     }

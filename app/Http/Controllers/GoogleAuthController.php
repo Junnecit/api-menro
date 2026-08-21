@@ -11,6 +11,7 @@ use App\Services\GoogleOAuthCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class GoogleAuthController extends Controller
 {
@@ -51,9 +52,13 @@ class GoogleAuthController extends Controller
 
             return redirect("{$frontendUrl}/auth/google/callback?code={$code}");
         } catch (UnauthorizedGoogleEmailException|InactiveGoogleAccountException $e) {
+            Log::warning('Google auth rejected: '.$e->getMessage());
+
             return redirect("{$frontendUrl}/auth/google/callback?error=".urlencode($e->getMessage()));
-        } catch (\Exception $e) {
-            return redirect("{$frontendUrl}/auth/google/callback?error=".urlencode('Google authentication failed.'));
+        } catch (\Throwable $e) {
+            Log::error('Google auth callback failed: '.$e->getMessage(), ['exception' => $e]);
+
+            return redirect("{$frontendUrl}/auth/google/callback?error=".urlencode('Google authentication failed. Please try again.'));
         }
     }
 

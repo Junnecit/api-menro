@@ -17,18 +17,16 @@ class UserApproved extends Notification
     {
         $supportEmail = config('mail.from.address');
         $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
+        $userName = $notifiable->name ?? 'User';
 
         return EmbedsMenroLogo::embed(
             (new MailMessage)
-                ->subject('Your account has been approved')
-                ->greeting('You\'re approved!')
-                ->line("Hi {$notifiable->name},")
-                ->line('Your MENRO Tree Planting Monitoring account has been approved.')
-                ->line('You can now log in to the app using your email and password.')
-                ->action('Log In', $frontendUrl)
-                ->line('---')
-                ->line("Having trouble with your account? [Contact us](mailto:{$supportEmail})")
-                ->salutation("Best,\nMENRO Tagoloan team")
+                ->subject('Your MENRO Account Has Been Approved')
+                ->markdown('emails.user-approved', [
+                    'userName' => $userName,
+                    'frontendUrl' => $frontendUrl,
+                    'supportEmail' => $supportEmail,
+                ])
         );
     }
 }

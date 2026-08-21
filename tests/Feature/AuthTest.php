@@ -136,6 +136,40 @@ class AuthTest extends TestCase
         ]);
     }
 
+    public function test_admin_verifying_registration_otp_activates_account_and_returns_token(): void
+    {
+        $adminRole = Role::where('slug', 'admin')->first();
+        $admin = User::create([
+            'role_id' => $adminRole->id,
+            'name' => 'Pending Admin',
+            'email' => 'pending_admin@example.com',
+            'password' => Hash::make('password'),
+            'status' => 'pending',
+            'email_verified_at' => null,
+        ]);
+
+        $otpService = app(\App\Services\RegistrationOtpService::class);
+        $code = $otpService->issue($admin->email);
+
+        $response = $this->postJson('/api/auth/verify-registration-otp', [
+            'email' => 'pending_admin@example.com',
+            'code' => $code,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.pending', false)
+            ->assertJsonPath('data.needs_verification', false);
+
+        $this->assertNotNull($response->json('data.token'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'pending_admin@example.com',
+            'status' => 'active',
+        ]);
+        $this->assertNotNull($admin->fresh()->email_verified_at);
+    }
+
     private function createUser(string $roleSlug = 'user'): User
     {
         $role = Role::where('slug', $roleSlug)->first();

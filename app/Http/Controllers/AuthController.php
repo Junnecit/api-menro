@@ -92,7 +92,7 @@ class AuthController extends Controller
         }
 
         // Web self-registration creates an Admin + Agency. Account stays Pending
-        // until email OTP is verified AND a Super Admin approves it.
+        // until email OTP is verified, which activates the account immediately.
         // No Sanctum token is issued at registration.
         $defaultRole = Role::where('slug', 'admin')->first();
 
@@ -257,18 +257,34 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Email OTP only confirms ownership of the inbox. Activation is a
-        // separate human decision: Super Admin for self-registered admins,
-        // managing admin for field users.
-        $user->forceFill(['email_verified_at' => now()])->save();
+        // Email OTP confirms ownership of the inbox.
+        // Self-registered admins are activated immediately upon email verification.
+        // Mobile field users still require approval from their managing admin.
+        if ($user->isAdmin()) {
+            $user->forceFill([
+                'email_verified_at' => now(),
+                'status' => UserStatus::Active,
+            ])->save();
 
-        $message = $user->isAdmin()
-            ? 'Email verified. Your account is pending approval from a Super Admin.'
-            : 'Email verified. Your account is pending approval from your managing admin.';
+            $token = $this->authService->createToken($user);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email verified successfully. Welcome to MENRO!',
+                'data' => [
+                    'user' => new UserResource($user->load(['role', 'agency'])),
+                    'token' => $token,
+                    'pending' => false,
+                    'needs_verification' => false,
+                ],
+            ]);
+        }
+
+        $user->forceFill(['email_verified_at' => now()])->save();
 
         return response()->json([
             'success' => true,
-            'message' => $message,
+            'message' => 'Email verified. Your account is pending approval from your managing admin.',
             'data' => [
                 'user' => new UserResource($user->load(['role', 'admin', 'agency'])),
                 'token' => null,

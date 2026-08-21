@@ -57,11 +57,19 @@ class GoogleAuthService
             throw new UnauthorizedGoogleEmailException($googleUser->getEmail());
         }
 
-        $defaultRole = Role::where('slug', 'user')->first();
+        $defaultRole = Role::where('slug', 'user')->first() ?? Role::first();
+
+        $baseName = trim($googleUser->getName() ?? '') ?: explode('@', $googleUser->getEmail())[0];
+        $name = $baseName;
+        $counter = 1;
+        while (User::where('name', $name)->exists()) {
+            $name = "{$baseName} ({$counter})";
+            $counter++;
+        }
 
         return User::create([
             'role_id' => $defaultRole?->id,
-            'name' => $googleUser->getName() ?? $googleUser->getEmail(),
+            'name' => $name,
             'email' => $googleUser->getEmail(),
             'google_id' => $googleUser->getId(),
             'status' => UserStatus::Active,

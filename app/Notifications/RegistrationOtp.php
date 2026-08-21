@@ -18,19 +18,16 @@ class RegistrationOtp extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $supportEmail = config('mail.from.address');
+        $userName = $notifiable->name ?? 'User';
 
         return EmbedsMenroLogo::embed(
             (new MailMessage)
-                ->subject('Your verification code')
-                ->greeting('Verify your email')
-                ->line("Hi {$notifiable->name},")
-                ->line('Use this code to verify your email for MENRO Tree Planting Monitoring:')
-                ->line("**{$this->code}**")
-                ->line('This code expires in 10 minutes.')
-                ->line('If you did not create an account, you can ignore this email.')
-                ->line('---')
-                ->line("Having trouble with your account? [Contact us](mailto:{$supportEmail})")
-                ->salutation("Best,\nMENRO Tagoloan team")
+                ->subject('Your MENRO Verification Code: '.$this->code)
+                ->markdown('emails.registration-otp', [
+                    'userName' => $userName,
+                    'code' => $this->code,
+                    'supportEmail' => $supportEmail,
+                ])
         );
     }
 }

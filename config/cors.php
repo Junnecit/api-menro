@@ -17,6 +17,8 @@ return [
         // LAN IP for physical devices / LAN dev access
         'http://192.168.8.34:5173',
         'http://192.168.8.34:8081',
+        'http://192.168.8.36:5173',
+        'http://192.168.8.36:8081',
     ])),
 
     'allowed_origins_patterns' => [],

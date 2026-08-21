@@ -6,10 +6,8 @@
 {{-- Header --}}
 <x-slot:header>
 <x-mail::header :url="$frontendUrl">
-{{-- Replaced with a cid: reference by App\Mail\EmbedsMenroLogo before sending, so
-     the logo renders in mail clients (Gmail, Outlook, etc.) that won't fetch a
-     localhost/private-network image URL or render an inline base64 data: URI. --}}
-<img src="MENRO_LOGO_CID" class="logo" alt="{{ config('app.name') }}">
+{{-- Replaced with a cid: reference by App\Mail\EmbedsMenroLogo before sending --}}
+<img src="MENRO_LOGO_CID" class="logo" alt="{{ config('app.name', 'MENRO Tagoloan') }}" style="max-height: 42px; width: auto; display: block; border: 0;">
 </x-mail::header>
 </x-slot:header>
 
@@ -27,8 +25,6 @@
 
 {{-- Footer --}}
 <x-slot:footer>
-<x-mail::footer>
-[Help](mailto:{{ $supportEmail }})&nbsp;&nbsp;&nbsp;[Terms & conditions]({{ $frontendUrl }})&nbsp;&nbsp;&nbsp;[Privacy Policy]({{ $frontendUrl }})
-</x-mail::footer>
+<x-mail::footer />
 </x-slot:footer>
 </x-mail::layout>
