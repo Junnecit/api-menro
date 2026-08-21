@@ -21,7 +21,9 @@ return [
         'http://192.168.8.36:8081',
     ])),
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '#^https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.0\.\d+\.\d+)(:\d+)?$#',
+    ],
 
     'allowed_headers' => ['*'],
 
