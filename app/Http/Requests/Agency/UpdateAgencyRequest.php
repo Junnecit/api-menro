@@ -37,7 +37,6 @@ class UpdateAgencyRequest extends FormRequest
             'barangay_name' => ['required_with:barangay_code', 'string', 'max:255'],
             'custom_address' => ['nullable', 'string', 'max:1000'],
             'location' => ['prohibited'],
-            'soil_type' => ['nullable', 'string', 'max:255'],
             'color' => ['nullable', 'string', 'max:255'],
             'status' => ['sometimes', 'required', Rule::in(['Active', 'Inactive'])],
         ];

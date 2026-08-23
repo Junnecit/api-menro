@@ -26,6 +26,9 @@ class MonitoringReportPdfService
         $totals = $this->computeTotals($query);
         $summary = $this->buildSummary($records, $totals);
 
+        $recordCount = $records->count();
+        $isSinglePage = $recordCount <= 5;
+
         $tempDir = storage_path('app/pdf-temp');
         if (! is_dir($tempDir)) {
             mkdir($tempDir, 0755, true);
@@ -35,12 +38,17 @@ class MonitoringReportPdfService
             // sys_get_temp_dir() can resolve to an unwritable system path
             // on some Windows setups; point dompdf at Laravel storage instead.
             'temp_dir' => $tempDir,
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+            'isPhpEnabled' => true,
         ], true)->loadView('reports.planting-monitoring', [
             'records' => $records,
             'totals' => $totals,
             'summary' => $summary,
             'filterNote' => $this->filterNote($filterMeta),
             'generatedAt' => now(),
+            'isSinglePage' => $isSinglePage,
+            'recordCount' => $recordCount,
             'headerDataUri' => $this->imageToDataUri(public_path('images/menro-header.png')),
             'menroSealDataUri' => $this->imageToDataUri(public_path('images/menro-seal.png')),
             'provinceSealDataUri' => $this->imageToDataUri(public_path('images/province-seal.png')),

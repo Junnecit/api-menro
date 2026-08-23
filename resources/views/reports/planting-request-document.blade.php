@@ -24,18 +24,23 @@
         /* --- HEADER --- */
         .header-container {
             width: 100%;
-            margin-bottom: 12px;
-            border-bottom: 2.5px solid #059669;
-            padding-bottom: 8px;
+            margin-bottom: 6px;
+            border-bottom: 2px solid #059669;
+            padding-bottom: 4px;
+            text-align: center;
         }
         .header-img {
-            width: 100%;
+            width: 78%;
+            max-width: 500px;
             height: auto;
-            max-height: 85px;
+            display: block;
+            margin: 0 auto;
+            padding: 0;
         }
         .header-table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 2px;
         }
         .header-table td {
             vertical-align: middle;
@@ -252,25 +257,49 @@
             margin-top: 1px;
         }
 
-        /* --- FOOTER --- */
+        footer {
+            position: fixed;
+            bottom: -20px;
+            left: 0;
+            right: 0;
+            height: 16px;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 3px;
+        }
         .footer-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 5px;
             font-size: 7.5px;
-            color: #94a3b8;
+            color: #64748b;
         }
         .footer-table td.right { text-align: right; }
     </style>
 </head>
 <body>
 
+    <footer>
+        <table class="footer-table">
+            <tr>
+                <td class="left">MENRO Tagoloan &bull; Official Planting Request Record &bull; Ref: {{ $request->request_no ?? 'REQ-' . $request->id }}</td>
+                <td class="right"></td>
+            </tr>
+        </table>
+    </footer>
+
+    {{-- Dynamic Page Numbering in Dompdf --}}
+    <script type="text/php">
+        if (isset($pdf)) {
+            $font = $fontMetrics->getFont("Helvetica", "normal");
+            $size = 7.5;
+            $color = array(0.39, 0.45, 0.55);
+            $pdf->page_text($pdf->get_width() - 85, $pdf->get_height() - 20, "Page {PAGE_NUM} of {PAGE_COUNT}", $font, $size, $color);
+        }
+    </script>
+
     {{-- ========== OFFICIAL MENRO HEADER ========== --}}
     <div class="header-container">
         @if(!empty($headerDataUri))
-            <div style="text-align: center;">
+            <div style="text-align: center; margin: 0; padding: 0;">
                 <img src="{{ $headerDataUri }}" alt="MENRO Tagoloan Letterhead" class="header-img">
             </div>
         @else
@@ -475,14 +504,6 @@
                     </div>
                 </div>
             </td>
-        </tr>
-    </table>
-
-    {{-- ========== FOOTER ========== --}}
-    <table class="footer-table">
-        <tr>
-            <td>MENRO Tagoloan &bull; Official Planting Request Record &bull; Ref: {{ $request->request_no ?? 'REQ-' . $request->id }}</td>
-            <td class="right">Generated on {{ now()->format('M d, Y') }} | Page 1 of 1</td>
         </tr>
     </table>
 

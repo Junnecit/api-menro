@@ -79,9 +79,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('agencies/trash', [AgencyController::class, 'trash']);
     Route::post('agencies/{id}/restore', [AgencyController::class, 'restore']);
     Route::delete('agencies/{id}/force', [AgencyController::class, 'forceDestroy']);
-    Route::post('agencies/{agency}/soil-document', [AgencyController::class, 'uploadSoilDocument']);
-    Route::delete('agencies/{agency}/soil-document', [AgencyController::class, 'removeSoilDocument']);
-    Route::get('agencies/{agency}/soil-document/download', [AgencyController::class, 'downloadSoilDocument']);
     Route::apiResource('agencies', AgencyController::class);
     Route::get('requests/trash', [RequestController::class, 'trash']);
     Route::get('requests/document-template', [RequestController::class, 'documentTemplate']);

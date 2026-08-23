@@ -15,7 +15,6 @@ class MigratePublicUploadsToPrivate extends Command
 
     /** @var list<string> */
     private const DIRS = [
-        'agency-soil-docs',
         'planting-request-docs',
         'tree-photos',
         'report-files',

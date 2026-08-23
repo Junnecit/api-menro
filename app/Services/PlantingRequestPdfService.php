@@ -24,6 +24,7 @@ class PlantingRequestPdfService
             'temp_dir' => storage_path('app/pdf-temp'),
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => true,
+            'isPhpEnabled' => true,
         ], true)->loadView('reports.planting-request-template', [
             'fields' => $defaultFields,
             'headerDataUri' => $this->imageToDataUri(public_path('images/menro-header.png')),
@@ -49,6 +50,7 @@ class PlantingRequestPdfService
             'temp_dir' => storage_path('app/pdf-temp'),
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => true,
+            'isPhpEnabled' => true,
         ], true)->loadView('reports.planting-request-document', [
             'request' => $request,
             'barangayName' => $barangayName,
@@ -84,6 +86,7 @@ class PlantingRequestPdfService
             'temp_dir' => storage_path('app/pdf-temp'),
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => true,
+            'isPhpEnabled' => true,
         ], true)->loadView('reports.planting-requests-summary', [
             'rows' => $rows,
             'totals' => $totals,

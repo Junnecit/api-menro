@@ -219,8 +219,14 @@ class PlantingMonitoringController extends Controller
             $query->whereDate('date_monitoring', '<=', $request->date('date_to'));
         }
 
-        if ($request->filled('ids') && is_array($request->input('ids'))) {
-            $query->whereIn('id', $request->input('ids'));
+        if ($request->has('ids')) {
+            $ids = $request->input('ids');
+            if (is_string($ids)) {
+                $ids = array_filter(array_map('trim', explode(',', $ids)));
+            }
+            if (is_array($ids) && count($ids) > 0) {
+                $query->whereIn('id', $ids);
+            }
         }
 
         return $query;

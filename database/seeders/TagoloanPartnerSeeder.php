@@ -73,7 +73,6 @@ class TagoloanPartnerSeeder extends Seeder
      *     contact: string,
      *     admin_name: string,
      *     color: string,
-     *     soil_type: string,
      *     barangay_code: string
      * }>
      */
@@ -88,7 +87,6 @@ class TagoloanPartnerSeeder extends Seeder
                 'contact' => 'Rosa Villanueva',
                 'admin_name' => 'Rosa Villanueva',
                 'color' => 'bg-blue-100 text-blue-800',
-                'soil_type' => 'Alluvial, fertile',
                 'barangay_code' => '104324006',
             ],
             [
@@ -99,7 +97,6 @@ class TagoloanPartnerSeeder extends Seeder
                 'contact' => 'Antonio Mercado',
                 'admin_name' => 'Antonio Mercado',
                 'color' => 'bg-blue-100 text-blue-800',
-                'soil_type' => 'Clay loam, well-drained',
                 'barangay_code' => '104324006',
             ],
             [
@@ -110,7 +107,6 @@ class TagoloanPartnerSeeder extends Seeder
                 'contact' => 'Elena Cabahug',
                 'admin_name' => 'Elena Cabahug',
                 'color' => 'bg-blue-100 text-blue-800',
-                'soil_type' => 'Sandy loam, coastal',
                 'barangay_code' => '104324008',
             ],
             [
@@ -121,7 +117,6 @@ class TagoloanPartnerSeeder extends Seeder
                 'contact' => 'Mario Ablan',
                 'admin_name' => 'Mario Ablan',
                 'color' => 'bg-blue-100 text-blue-800',
-                'soil_type' => 'Silty clay, high moisture',
                 'barangay_code' => '104324002',
             ],
             [
@@ -132,7 +127,6 @@ class TagoloanPartnerSeeder extends Seeder
                 'contact' => 'Ben Morales',
                 'admin_name' => 'Ben Morales',
                 'color' => 'bg-green-100 text-green-800',
-                'soil_type' => 'Loamy, high organic matter',
                 'barangay_code' => '104324001',
             ],
             [
@@ -143,7 +137,6 @@ class TagoloanPartnerSeeder extends Seeder
                 'contact' => 'Dani Soriano',
                 'admin_name' => 'Dani Soriano',
                 'color' => 'bg-teal-100 text-teal-800',
-                'soil_type' => 'Loamy, well-drained inland',
                 'barangay_code' => '104324009',
             ],
             [
@@ -154,7 +147,6 @@ class TagoloanPartnerSeeder extends Seeder
                 'contact' => 'Ligaya Bautista',
                 'admin_name' => 'Ligaya Bautista',
                 'color' => 'bg-teal-100 text-teal-800',
-                'soil_type' => 'Volcanic loam, fertile',
                 'barangay_code' => '104324007',
             ],
             [
@@ -165,7 +157,6 @@ class TagoloanPartnerSeeder extends Seeder
                 'contact' => 'Carlo Reyes',
                 'admin_name' => 'Carlo Reyes',
                 'color' => 'bg-purple-100 text-purple-800',
-                'soil_type' => 'Red clay, well-drained',
                 'barangay_code' => '104324005',
             ],
             [
@@ -176,7 +167,6 @@ class TagoloanPartnerSeeder extends Seeder
                 'contact' => 'Ana Fernandez',
                 'admin_name' => 'Ana Fernandez',
                 'color' => 'bg-orange-100 text-orange-800',
-                'soil_type' => 'Sandy, low moisture',
                 'barangay_code' => '104324004',
             ],
             [
@@ -187,7 +177,6 @@ class TagoloanPartnerSeeder extends Seeder
                 'contact' => 'Jose Rivera',
                 'admin_name' => 'Jose Rivera',
                 'color' => 'bg-pink-100 text-pink-800',
-                'soil_type' => 'Loamy, slightly acidic',
                 'barangay_code' => '104324003',
             ],
         ];
@@ -257,7 +246,6 @@ class TagoloanPartnerSeeder extends Seeder
                     'municipality_code' => $municipalityCode,
                     'barangay_code' => $partner['barangay_code'],
                     'location' => TagoloanLocation::formatLocation($partner['barangay_code']),
-                    'soil_type' => $partner['soil_type'],
                     'color' => $partner['color'],
                     'status' => 'Active',
                 ]

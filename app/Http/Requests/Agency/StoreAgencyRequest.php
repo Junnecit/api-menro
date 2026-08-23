@@ -37,7 +37,6 @@ class StoreAgencyRequest extends FormRequest
             'barangay_name' => ['required', 'string', 'max:255'],
             'custom_address' => ['nullable', 'string', 'max:1000'],
             'location' => ['prohibited'],
-            'soil_type' => ['nullable', 'string', 'max:255'],
             'color' => ['nullable', 'string', 'max:255'],
             'status' => ['required', Rule::in(['Active', 'Inactive'])],
         ];

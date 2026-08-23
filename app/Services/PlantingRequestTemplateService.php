@@ -159,7 +159,7 @@ XML;
         $headerDrawing = $hasHeaderImg
             ? '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="80"/></w:pPr>'
             .'<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">'
-            .'<wp:extent cx="5760000" cy="748800"/>'
+            .'<wp:extent cx="5760000" cy="1440000"/>'
             .'<wp:docPr id="1" name="MENRO Header"/>'
             .'<wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>'
             .'<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
@@ -167,7 +167,7 @@ XML;
             .'<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">'
             .'<pic:nvPicPr><pic:cNvPr id="1" name="menro-header.png"/><pic:cNvPicPr/></pic:nvPicPr>'
             .'<pic:blipFill><a:blip r:embed="rIdHeaderImg" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
-            .'<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="5760000" cy="748800"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'
+            .'<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="5760000" cy="1440000"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'
             .'</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>'
             : '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="60"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="22"/><w:color w:val="064E3B"/></w:rPr><w:t>MUNICIPAL ENVIRONMENT AND NATURAL RESOURCES OFFICE (MENRO) TAGOLOAN</w:t></w:r></w:p>';
 

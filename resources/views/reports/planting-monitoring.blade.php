@@ -4,394 +4,341 @@
     <meta charset="utf-8">
     <title>MENRO Planting &amp; Monitoring Report</title>
     <style>
-        @page { margin: 30px 40px; }
+        @page {
+            margin: 18px 26px 30px 26px;
+            size: legal portrait;
+        }
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: "Helvetica", "Arial", sans-serif;
-            font-size: 10px;
-            color: #334155;
-            line-height: 1.4;
-        }
-
-        /* --- HEADER --- */
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-            border-bottom: 3px solid #059669;
-            padding-bottom: 12px;
-            margin-bottom: 15px;
-            background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%); /* subtle teal gradient */
-        }
-        .header-table td {
-            vertical-align: middle;
-        }
-        .seal-td {
-            width: 70px;
-        }
-        .seal-img {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-        }
-        .agency-td {
-            text-align: left;
-        }
-        .agency-republic {
-            font-size: 8.5px;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            line-height: 1.2;
-        }
-        .agency-name {
-            font-size: 11px;
-            font-weight: bold;
+            font-size: 8px;
             color: #1e293b;
-            line-height: 1.2;
-        }
-        .agency-office {
-            font-size: 14px;
-            font-weight: bold;
-            color: #059669;
-            margin-top: 2px;
-            line-height: 1.2;
-        }
-        .title-td {
-            text-align: right;
-            vertical-align: bottom;
-            width: 220px;
-        }
-        .doc-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #064e3b;
-            text-transform: uppercase;
-            line-height: 1.1;
-        }
-        .doc-subtitle {
-            font-size: 9px;
-            color: #64748b;
-            margin-top: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-        /* --- META BAR --- */
-        .meta-bar {
-            background: linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);
-            border: 1px solid #e2e8f0;
-            border-left: 4px solid #059669;
-            padding: 8px 12px;
-            margin-bottom: 20px;
-            font-size: 9px;
-            color: #475569;
-        }
-        .meta-bar strong { color: #1e293b; font-weight: bold; }
-        /* --- KPI WIDGETS --- */
-        .kpi-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 8px 0;
-            margin: 0 -8px 20px -8px;
-            table-layout: fixed;
-        }
-        .kpi-table td {
-            width: 16.66%;
+            line-height: 1.3;
             background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-top: 3px solid #059669;
-            border-radius: 6px;
-            padding: 12px 5px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
-        }
-        .kpi-table td.died { border-top-color: #ef4444; }
-        .kpi-table td.replanted { border-top-color: #eab308; }
-        .kpi-val { display: block; font-size: 16px; font-weight: bold; color: #0f172a; margin-bottom: 4px; }
-        .kpi-lbl { display: block; font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-        /* --- SURVIVAL PANEL --- */
-        .survival-td {
-            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-            border: 1px solid #a7f3d0;
-            border-radius: 6px;
-            padding: 18px 10px;
-            text-align: center;
-            width: 32%;
-        }
-        .survival-td .lbl { font-size: 9px; color: #047857; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
-        .survival-td .val { font-size: 28px; font-weight: bold; color: #064e3b; margin: 12px 0; line-height: 1; }
-        .survival-badge { display: inline-block; padding: 5px 14px; font-size: 9px; font-weight: bold; text-transform: uppercase; border-radius: 12px; color: #ffffff; }
-        .survival-badge.good { background-color: #059669; }
-        .survival-badge.attention { background-color: #d97706; }
-        .survival-badge.critical { background-color: #dc2626; }
-        .survival-td .hint { font-size: 7px; color: #047857; margin-top: 14px; opacity: 0.8; line-height: 1.4; }
-        /* --- PERFORMANCE GRID --- */
-        .perf-td {
-            width: 68%;
-            background-color: #f8fafc;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
+            margin: 0;
             padding: 0;
         }
-        .perf-grid {
+
+        /* --- FIXED BOTTOM FOOTER --- */
+        footer {
+            position: fixed;
+            bottom: -20px;
+            left: 0;
+            right: 0;
+            height: 16px;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 3px;
+        }
+        .footer-table {
             width: 100%;
             border-collapse: collapse;
         }
-        .perf-grid td {
-            width: 50%;
-            padding: 15px 18px;
-            border: 1px solid #e2e8f0;
+        .footer-table td {
+            font-size: 7.5px;
+            color: #64748b;
             vertical-align: middle;
+            padding: 0;
         }
-        .perf-grid .lbl { display: block; font-size: 8.5px; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
-        .perf-grid .val { display: block; font-size: 15px; font-weight: bold; color: #1e293b; }
-        /* --- DATATABLES --- */
-        table.data-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 9px; }
-        table.data-table th, table.data-table td { padding: 9px 6px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; text-align: center; }
-        table.data-table th.left, table.data-table td.left { text-align: left; }
-        table.data-table thead th { background-color: #f8fafc; color: #475569; text-transform: uppercase; font-size: 8px; font-weight: bold; letter-spacing: 0.5px; border-top: 1px solid #e2e8f0; border-bottom: 2px solid #cbd5e1; }
-        table.data-table tbody tr:nth-child(even) { background-color: #f8fafc; }
-        table.data-table tbody tr.total-row { background-color: #ecfdf5; }
-        table.data-table tbody tr.total-row td { font-weight: bold; color: #064e3b; border-top: 2px solid #059669; border-bottom: 2px solid #059669; }
-        /* --- NOTES & FINDINGS --- */
-        ul.findings { margin: 0 0 15px 0; padding-left: 20px; }
-        ul.findings li { margin-bottom: 5px; font-size: 9.5px; color: #1e293b; }
-        .notes-box { background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 15px; margin-top: 20px; min-height: 60px; }
-        .notes-box .lbl { font-size: 10px; font-weight: bold; color: #064e3b; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
-        .notes-line { border-bottom: 1px dotted #94a3b8; height: 18px; margin-bottom: 4px; }
-        /* --- SIGNATURES --- */
-        .signatures { width: 100%; border-collapse: collapse; margin-top: 50px; page-break-inside: avoid; }
-        .signatures td { width: 33.33%; text-align: center; padding: 0 20px; vertical-align: top; }
-        .sig-container { position: relative; }
-        .sig-role { font-size: 9px; color: #064e3b; font-weight: bold; text-transform: uppercase; text-align: left; margin-bottom: 30px; letter-spacing: 0.5px; }
-        .sig-line { border-top: 1px solid #1e293b; padding-top: 6px; }
-        .sig-name { font-size: 10px; color: #64748b; text-transform: uppercase; }
-        /* --- UTILS --- */
-        .page-break { page-break-after: always; }
-        .footer-table { width: 100%; border-collapse: collapse; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 10px; }
-        .footer-table td { font-size: 8px; color: #94a3b8; }
-        .footer-table td.right { text-align: right; }
-        body { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
+        .footer-table td.left {
+            text-align: left;
+        }
+        .footer-table td.right {
+            text-align: right;
+            padding-right: 65px;
+        }
 
+        /* --- OFFICIAL HEADER --- */
+        .header-container {
+            width: 100%;
+            margin-bottom: 6px;
+            border-bottom: 2px solid #059669;
+            padding-bottom: 4px;
+            text-align: center;
+        }
+        .header-img {
+            width: 78%;
+            max-width: 500px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            padding: 0;
+        }
+        .header-table {
+            width: 80%;
+            margin: 0 auto 2px auto;
+            border-collapse: collapse;
+        }
         .header-table td {
             vertical-align: middle;
         }
         .seal-td {
-            width: 70px;
-        }
-        .seal-img {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-        }
-        .agency-td {
-            text-align: left;
-        }
-        .agency-republic {
-            font-size: 8.5px;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            line-height: 1.2;
-        }
-        .agency-name {
-            font-size: 11px;
-            font-weight: bold;
-            color: #1e293b;
-            line-height: 1.2;
-        }
-        .agency-office {
-            font-size: 14px;
-            font-weight: bold;
-            color: #059669;
-            margin-top: 2px;
-            line-height: 1.2;
-        }
-        .title-td {
-            text-align: right;
-            vertical-align: bottom;
-            width: 220px;
-        }
-        .doc-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #064e3b;
-            text-transform: uppercase;
-            line-height: 1.1;
-        }
-        .doc-subtitle {
-            font-size: 8.5px;
-            color: #64748b;
-            margin-top: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        /* --- META BAR --- */
-        .meta-bar {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-left: 4px solid #059669;
-            padding: 8px 12px;
-            margin-bottom: 20px;
-            font-size: 9px;
-            color: #475569;
-        }
-        .meta-bar strong { color: #1e293b; font-weight: bold; }
-
-        /* --- SECTION HEADERS --- */
-        .section-header {
-            font-size: 11px;
-            font-weight: bold;
-            color: #064e3b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 20px;
-            margin-bottom: 12px;
-            border-bottom: 1.5px solid #cbd5e1;
-            padding-bottom: 4px;
-        }
-
-        /* --- KPI WIDGETS --- */
-        .kpi-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 8px 0;
-            margin: 0 -8px 20px -8px;
-        }
-        .kpi-table td {
-            width: 16.66%;
-            background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-top: 3px solid #059669;
-            border-radius: 4px;
-            padding: 10px 5px;
+            width: 48px;
             text-align: center;
         }
-        .kpi-table td.died { border-top-color: #ef4444; }
-        .kpi-table td.replanted { border-top-color: #eab308; }
-        .kpi-val {
-            display: block;
-            font-size: 17px;
+        .seal-img {
+            width: 42px;
+            height: 42px;
+        }
+        .agency-td {
+            text-align: center;
+            padding: 0 8px;
+        }
+        .agency-office-top {
+            font-size: 10.5px;
             font-weight: bold;
             color: #0f172a;
+            letter-spacing: 0.3px;
+            line-height: 1.15;
+        }
+        .agency-republic {
+            font-size: 7.5px;
+            color: #475569;
+            line-height: 1.15;
+            margin-top: 1px;
+        }
+        .agency-province {
+            font-size: 8.5px;
+            color: #0f172a;
+            font-weight: bold;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            line-height: 1.15;
+            margin-top: 1px;
+        }
+        .agency-municipality {
+            font-size: 9.5px;
+            font-weight: bold;
+            color: #0f172a;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            line-height: 1.15;
+            margin-top: 1px;
+        }
+
+        /* --- DOCUMENT TITLE & SUBTITLE (CLEAN CENTERED) --- */
+        .report-title-section {
+            text-align: center;
+            margin-top: 4px;
+            margin-bottom: 6px;
+        }
+        .report-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #065f46;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin: 0 0 1px 0;
+        }
+        .report-subtitle {
+            font-size: 7.5px;
+            color: #475569;
+            margin: 0 0 1px 0;
+        }
+        .report-meta {
+            font-size: 7px;
+            color: #64748b;
+            margin: 0;
+        }
+
+        /* --- SECTION TITLES WITH FULL-WIDTH GREEN DIVIDER --- */
+        .section-title {
+            font-size: 8px;
+            font-weight: bold;
+            color: #065f46;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-top: 7px;
             margin-bottom: 4px;
+            border-bottom: 1.5px solid #059669;
+            padding-bottom: 2px;
+        }
+
+        /* --- 1. KEY PERFORMANCE INDICATORS (6 CARDS IN A ROW) --- */
+        .kpi-grid {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 4px 0;
+            table-layout: fixed;
+            margin-bottom: 6px;
+        }
+        .kpi-grid td {
+            width: 16.66%;
+            background-color: #f0fdf4;
+            border: 1px solid #a7f3d0;
+            border-radius: 3px;
+            padding: 5px 2px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .kpi-val {
+            display: block;
+            font-size: 11.5px;
+            font-weight: bold;
+            color: #064e3b;
+            line-height: 1.1;
         }
         .kpi-lbl {
             display: block;
+            font-size: 6px;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.25px;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        /* --- 2. SURVIVAL RATE & MONITORING PERFORMANCE PANEL --- */
+        .performance-panel {
+            width: 100%;
+            background-color: #f0fdf4;
+            border: 1px solid #a7f3d0;
+            border-radius: 3px;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+        }
+        .performance-panel td {
+            vertical-align: middle;
+            padding: 7px 10px;
+        }
+        .perf-left {
+            width: 32%;
+            text-align: center;
+            border-right: 1px solid #a7f3d0;
+        }
+        .perf-mid {
+            width: 34%;
+            padding-left: 12px !important;
+            border-right: 1px solid #e2e8f0;
+        }
+        .perf-right {
+            width: 34%;
+            padding-left: 12px !important;
+        }
+        .perf-stat-group {
+            margin-bottom: 4px;
+        }
+        .perf-stat-group:last-child {
+            margin-bottom: 0;
+        }
+        .perf-stat-lbl {
             font-size: 7px;
             color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            display: block;
         }
-
-        /* --- HIGHLIGHT PANELS --- */
-        .highlight-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 12px 0;
-            margin: 0 -12px 20px -12px;
-        }
-        .highlight-table > tbody > tr > td {
-            vertical-align: top;
-            padding: 0;
-        }
-        .survival-panel {
-            background-color: #ecfdf5;
-            border: 1px solid #a7f3d0;
-            border-radius: 6px;
-            padding: 18px 15px;
-            text-align: center;
-            width: 35%;
-        }
-        .survival-panel .lbl {
-            font-size: 9px;
-            color: #047857;
-            text-transform: uppercase;
+        .perf-stat-val {
+            font-size: 9.5px;
             font-weight: bold;
-            letter-spacing: 0.5px;
+            color: #0f172a;
+            display: block;
+            margin-top: 0.5px;
         }
-        .survival-panel .val {
-            font-size: 40px;
+        .perf-overall-lbl {
+            font-size: 7px;
+            color: #059669;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .perf-overall-val {
+            font-size: 19px;
             font-weight: bold;
             color: #064e3b;
-            margin: 10px 0;
+            margin: 2px 0 3px 0;
             line-height: 1;
         }
-        .survival-badge {
+        .survival-pill {
             display: inline-block;
-            padding: 5px 14px;
-            font-size: 9px;
+            background-color: #059669;
+            color: #ffffff;
+            font-size: 7px;
             font-weight: bold;
             text-transform: uppercase;
-            border-radius: 12px;
-            color: #ffffff;
-        }
-        .survival-badge.good { background-color: #059669; }
-        .survival-badge.attention { background-color: #d97706; }
-        .survival-badge.critical { background-color: #dc2626; }
-        .survival-panel .hint {
-            font-size: 7.5px;
-            color: #047857;
-            margin-top: 12px;
-            opacity: 0.8;
-        }
-
-        .perf-panel {
-            width: 65%;
-        }
-        .perf-grid {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .perf-grid td {
-            width: 50%;
-            padding: 14px;
-            border: 1px solid #e2e8f0;
-            background-color: #f8fafc;
-        }
-        .perf-grid td.rounded-tl { border-top-left-radius: 6px; }
-        .perf-grid td.rounded-tr { border-top-right-radius: 6px; }
-        .perf-grid td.rounded-bl { border-bottom-left-radius: 6px; }
-        .perf-grid td.rounded-br { border-bottom-right-radius: 6px; }
-        .perf-grid .lbl {
-            display: block;
-            font-size: 9px;
-            color: #64748b;
-            margin-bottom: 5px;
-            text-transform: uppercase;
+            padding: 1.5px 8px;
+            border-radius: 8px;
             letter-spacing: 0.3px;
         }
-        .perf-grid .val {
-            display: block;
-            font-size: 14px;
-            font-weight: bold;
-            color: #1e293b;
+        .survival-pill.attention { background-color: #d97706; }
+        .survival-pill.critical { background-color: #dc2626; }
+        .perf-overall-hint {
+            font-size: 5.5px;
+            color: #047857;
+            margin-top: 3px;
+            opacity: 0.85;
         }
 
-        /* --- DATATABLES --- */
+        /* --- 3. KEY FINDINGS LIST --- */
+        .findings-list {
+            margin: 2px 0 6px 0;
+            padding-left: 14px;
+        }
+        .findings-list li {
+            font-size: 7.5px;
+            color: #1e293b;
+            line-height: 1.3;
+            margin-bottom: 2px;
+        }
+
+        /* --- 4. GEOGRAPHIC / AREA SUMMARY TABLE --- */
+        .area-summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+            font-size: 7.5px;
+        }
+        .area-summary-table th, .area-summary-table td {
+            border: 1px solid #a7f3d0;
+            padding: 3.5px 5px;
+            vertical-align: middle;
+            text-align: center;
+        }
+        .area-summary-table th {
+            background-color: #f0fdf4;
+            color: #065f46;
+            font-weight: bold;
+            font-size: 7px;
+            letter-spacing: 0.3px;
+        }
+        .area-summary-table th.left, .area-summary-table td.left {
+            text-align: left;
+            padding-left: 6px;
+        }
+        .area-summary-table td {
+            border: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        /* --- DETAILED DATA TABLE --- */
         table.data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
-            font-size: 9px;
+            margin-bottom: 6px;
+            font-size: 7.5px;
+        }
+        table.data-table thead {
+            display: table-header-group;
+        }
+        table.data-table tr {
+            page-break-inside: avoid;
         }
         table.data-table th, table.data-table td {
-            padding: 9px 6px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 3.5px 4px;
+            border: 1px solid #cbd5e1;
             vertical-align: middle;
             text-align: center;
         }
         table.data-table th.left, table.data-table td.left {
             text-align: left;
+            padding-left: 5px;
         }
         table.data-table thead th {
-            background-color: #f8fafc;
-            color: #475569;
+            background-color: #f1f5f9;
+            color: #334155;
             text-transform: uppercase;
-            font-size: 8px;
+            font-size: 7px;
             font-weight: bold;
-            letter-spacing: 0.5px;
-            border-top: 1px solid #e2e8f0;
-            border-bottom: 2px solid #cbd5e1;
+            letter-spacing: 0.3px;
         }
         table.data-table tbody tr:nth-child(even) {
             background-color: #f8fafc;
@@ -402,208 +349,458 @@
         table.data-table tbody tr.total-row td {
             font-weight: bold;
             color: #064e3b;
-            border-top: 2px solid #059669;
-            border-bottom: 2px solid #059669;
+            border-top: 1.5px solid #059669;
+            border-bottom: 1.5px solid #059669;
         }
 
-        /* --- NOTES & FINDINGS --- */
-        ul.findings {
-            margin: 0 0 15px 0;
-            padding-left: 20px;
-        }
-        ul.findings li {
-            margin-bottom: 5px;
-            font-size: 9.5px;
-            color: #1e293b;
-        }
+        /* --- NOTES & OBSERVATIONS --- */
         .notes-box {
             background-color: #f8fafc;
             border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 15px;
-            margin-top: 20px;
-            min-height: 60px;
+            border-radius: 3px;
+            padding: 5px 7px;
+            margin-top: 5px;
+            margin-bottom: 6px;
+            page-break-inside: avoid;
         }
         .notes-box .lbl {
-            font-size: 10px;
+            font-size: 7.5px;
             font-weight: bold;
             color: #064e3b;
             text-transform: uppercase;
-            margin-bottom: 8px;
-            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+            letter-spacing: 0.3px;
         }
         .notes-line {
             border-bottom: 1px dotted #94a3b8;
-            height: 18px;
-            margin-bottom: 4px;
+            height: 10px;
+            margin-bottom: 2px;
         }
 
         /* --- SIGNATURES --- */
         .signatures {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 50px;
+            border-collapse: separate;
+            border-spacing: 10px 0;
+            table-layout: fixed;
+            margin-top: 6px;
             page-break-inside: avoid;
         }
         .signatures td {
             width: 33.33%;
             text-align: center;
-            padding: 0 20px;
+            padding: 0;
             vertical-align: top;
         }
         .sig-container {
             position: relative;
         }
         .sig-role {
-            font-size: 9px;
+            font-size: 7px;
             color: #064e3b;
             font-weight: bold;
             text-transform: uppercase;
             text-align: left;
-            margin-bottom: 30px;
-            letter-spacing: 0.5px;
+            margin-bottom: 18px;
+            letter-spacing: 0.3px;
         }
         .sig-line {
-            border-top: 1px solid #1e293b;
-            padding-top: 6px;
+            border-top: 1px solid #334155;
+            padding-top: 2.5px;
         }
         .sig-name {
-            font-size: 10px;
-            color: #64748b;
+            font-size: 7px;
+            color: #475569;
             text-transform: uppercase;
         }
 
         /* --- UTILS --- */
-        .page-break { page-break-after: always; }
-        
-        .footer-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 30px;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 10px;
+        .page-break {
+            page-break-after: always;
         }
-        .footer-table td {
-            font-size: 8px;
-            color: #94a3b8;
-        }
-        .footer-table td.right { text-align: right; }
     </style>
 </head>
 <body>
-    {{-- ========== PAGE 1: Executive Summary ========== --}}
-    <div class="page-break">
-        @if(!empty($headerDataUri))
-            <div style="text-align:center; margin-bottom: 15px; border-bottom: 3px solid #059669; padding-bottom: 12px;">
-                <img src="{{ $headerDataUri }}" alt="MENRO Letterhead" style="width:100%; height:auto;">
-            </div>
-        @else
-            <table class="header-table">
-                <tr>
-                    <td class="seal-td">
-                        @if(!empty($menroSealDataUri))
-                            <img src="{{ $menroSealDataUri }}" alt="MENRO Seal" class="seal-img">
-                        @elseif(!empty($provinceSealDataUri))
-                            <img src="{{ $provinceSealDataUri }}" alt="Province Seal" class="seal-img">
-                        @endif
-                    </td>
-                    <td class="agency-td">
-                        <div class="agency-republic">Republic of the Philippines</div>
-                        <div class="agency-name">PROVINCE OF MISAMIS ORIENTAL</div>
-                        <div class="agency-name">MUNICIPALITY OF TAGOLOAN</div>
-                        <div class="agency-office">Municipal Environment and Natural Resources Office</div>
-                    </td>
-                    <td class="title-td">
-                        <div class="doc-title">Planting &amp;<br>Monitoring Report</div>
-                        <div class="doc-subtitle">Environmental Impact Summary</div>
-                    </td>
-                </tr>
-            </table>
-        @endif
 
-        <div class="meta-bar">
-            Generated: <strong>{{ $generatedAt->format('M d, Y g:i A') }}</strong>
-            @if(!empty($filterNote))
-                &nbsp;|&nbsp; Filters: <strong>{{ $filterNote }}</strong>
+    {{-- ========================================================================= --}}
+    {{-- OFFICIAL FIXED BOTTOM FOOTER (PERSISTENT ACROSS ALL PAGES)                --}}
+    {{-- ========================================================================= --}}
+    <footer>
+        <table class="footer-table">
+            <tr>
+                <td class="left">MENRO Tagoloan &bull; Official Monitoring Report</td>
+                <td class="right"></td>
+            </tr>
+        </table>
+    </footer>
+
+    {{-- Dynamic Page Numbering in Dompdf --}}
+    <script type="text/php">
+        if (isset($pdf)) {
+            $font = $fontMetrics->getFont("Helvetica", "normal");
+            $size = 7.5;
+            $color = array(0.39, 0.45, 0.55);
+            $pdf->page_text($pdf->get_width() - 85, $pdf->get_height() - 20, "Page {PAGE_NUM} of {PAGE_COUNT}", $font, $size, $color);
+        }
+    </script>
+
+@if(!empty($isSinglePage) && $isSinglePage)
+    {{-- ========================================================================= --}}
+    {{-- 1-PAGE LAYOUT: ALL INFO ON 1 PAGE (FOR 1 TO 5 RECORDS)                    --}}
+    {{-- ========================================================================= --}}
+    <div>
+        {{-- 1. Official Header --}}
+        <div class="header-container">
+            @if(!empty($headerDataUri))
+                <div style="text-align: center; margin: 0; padding: 0;">
+                    <img src="{{ $headerDataUri }}" alt="MENRO Tagoloan Letterhead" class="header-img">
+                </div>
+            @else
+                <table class="header-table">
+                    <tr>
+                        <td class="seal-td">
+                            @if(!empty($menroSealDataUri))
+                                <img src="{{ $menroSealDataUri }}" alt="MENRO Seal" class="seal-img">
+                            @endif
+                        </td>
+                        <td class="agency-td">
+                            <div class="agency-office-top">Municipal Environment and Natural Resources Office</div>
+                            <div class="agency-republic">Republic of the Philippines</div>
+                            <div class="agency-province">PROVINCE OF MISAMIS ORIENTAL</div>
+                            <div class="agency-municipality">MUNICIPALITY OF TAGOLOAN</div>
+                        </td>
+                        <td class="seal-td">
+                            @if(!empty($provinceSealDataUri))
+                                <img src="{{ $provinceSealDataUri }}" alt="Province Seal" class="seal-img">
+                            @endif
+                        </td>
+                    </tr>
+                </table>
             @endif
         </div>
 
-        <div class="section-header">Key Performance Indicators</div>
-        <table class="kpi-table">
+        {{-- 2. Report Title & Meta --}}
+        <div class="report-title-section">
+            <h1 class="report-title">PLANTING &amp; MONITORING REPORT</h1>
+            <div class="report-subtitle">
+                @if($recordCount === 1)
+                    Individual Monitoring Record &bull; Official MENRO Document
+                @else
+                    Environmental Monitoring Summary ({{ $recordCount }} Records) &bull; Official MENRO Document
+                @endif
+            </div>
+            <div class="report-meta">Generated {{ $generatedAt->format('M d, Y g:i A') }}</div>
+        </div>
+
+        {{-- 3. Key Performance Indicators --}}
+        <div class="section-title">KEY PERFORMANCE INDICATORS</div>
+        <table class="kpi-grid">
             <tr>
                 <td>
                     <span class="kpi-val">{{ number_format($summary['record_count']) }}</span>
-                    <span class="kpi-lbl">Monitoring Records</span>
+                    <span class="kpi-lbl">MONITORING RECORDS</span>
                 </td>
                 <td>
                     <span class="kpi-val">{{ number_format($totals['seedlings_planted']) }}</span>
-                    <span class="kpi-lbl">Seedlings Planted</span>
+                    <span class="kpi-lbl">SEEDLINGS PLANTED</span>
                 </td>
                 <td>
                     <span class="kpi-val">{{ number_format($totals['survived_count']) }}</span>
-                    <span class="kpi-lbl">Survived</span>
+                    <span class="kpi-lbl">SURVIVED</span>
                 </td>
-                <td class="died">
+                <td>
                     <span class="kpi-val">{{ number_format($totals['died_count']) }}</span>
-                    <span class="kpi-lbl">Died</span>
+                    <span class="kpi-lbl">DIED</span>
                 </td>
-                <td class="replanted">
+                <td>
                     <span class="kpi-val">{{ number_format($totals['replanted_count']) }}</span>
-                    <span class="kpi-lbl">Re-planted</span>
+                    <span class="kpi-lbl">RE-PLANTED</span>
                 </td>
                 <td>
                     <span class="kpi-val">{{ number_format($totals['survival_rate'], 2) }}%</span>
-                    <span class="kpi-lbl">Survival Rate</span>
+                    <span class="kpi-lbl">SURVIVAL RATE</span>
                 </td>
             </tr>
         </table>
 
-        <div class="section-header">Survival Rate &amp; Monitoring Performance</div>
-        <table class="highlight-table">
+        {{-- 4. Survival Rate & Performance Panel --}}
+        <div class="section-title">SURVIVAL RATE &amp; MONITORING PERFORMANCE</div>
+        <table class="performance-panel">
             <tr>
-                <td class="survival-td">
-                    <div class="lbl">Overall Survival</div>
-                    <div class="val">{{ number_format($totals['survival_rate'], 2) }}%</div>
-                    <span class="survival-badge {{ $summary['survival_band'] === 'good' ? 'good' : ($summary['survival_band'] === 'attention' ? 'attention' : 'critical') }}">
-                        {{ $summary['survival_band_label'] }}
-                    </span>
-                    <div class="hint">Excellent &gt;= 85%<br>Good &gt;= 70% &nbsp;|&nbsp; Attention &lt; 70%</div>
+                <td class="perf-left">
+                    <div class="perf-overall-lbl">OVERALL SURVIVAL</div>
+                    <div class="perf-overall-val">{{ number_format($totals['survival_rate'], 2) }}%</div>
+                    <span class="survival-pill {{ $summary['survival_band'] }}">{{ $summary['survival_band_label'] }}</span>
+                    <div class="perf-overall-hint">Excellent: &gt;= 85% | Good: &gt;= 70% | Needs Attention: &lt; 70%</div>
                 </td>
-                <td class="perf-td">
-                    <table class="perf-grid">
-                        <tr>
-                            <td class="no-border-top no-border-left">
-                                <span class="lbl">Monitoring Events</span>
-                                <span class="val">{{ number_format($summary['record_count']) }}</span>
-                            </td>
-                            <td class="no-border-top no-border-right">
-                                <span class="lbl">Agencies / Requesters</span>
-                                <span class="val">{{ number_format($summary['agency_count']) }}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="no-border-bottom no-border-left">
-                                <span class="lbl">Distinct Sites / Areas</span>
-                                <span class="val">{{ number_format($summary['site_count']) }}</span>
-                            </td>
-                            <td class="no-border-bottom no-border-right">
-                                <span class="lbl">Coverage Period</span>
-                                <span class="val">
-                                    @if($summary['date_from'] && $summary['date_to'])
-                                        {{ $summary['date_from']->format('M d, Y') }} - {{ $summary['date_to']->format('M d, Y') }}
-                                    @else
-                                        Overall Summary
-                                    @endif
-                                </span>
-                            </td>
-                        </tr>
-                    </table>
+                <td class="perf-mid">
+                    <div class="perf-stat-group">
+                        <span class="perf-stat-lbl">Monitoring events</span>
+                        <span class="perf-stat-val">{{ number_format($summary['record_count']) }}</span>
+                    </div>
+                    <div class="perf-stat-group">
+                        <span class="perf-stat-lbl">Distinct sites / areas</span>
+                        <span class="perf-stat-val">{{ number_format($summary['site_count']) }}</span>
+                    </div>
+                </td>
+                <td class="perf-right">
+                    <div class="perf-stat-group">
+                        <span class="perf-stat-lbl">Agencies / requesters</span>
+                        <span class="perf-stat-val">{{ number_format($summary['agency_count']) }}</span>
+                    </div>
+                    <div class="perf-stat-group">
+                        <span class="perf-stat-lbl">Coverage period</span>
+                        <span class="perf-stat-val">
+                            @if($summary['date_from'] && $summary['date_to'])
+                                {{ $summary['date_from']->format('M d, Y') }} - {{ $summary['date_to']->format('M d, Y') }}
+                            @elseif($summary['date_from'])
+                                From {{ $summary['date_from']->format('M d, Y') }}
+                            @elseif($summary['date_to'])
+                                Until {{ $summary['date_to']->format('M d, Y') }}
+                            @else
+                                Recorded Entries
+                            @endif
+                        </span>
+                    </div>
                 </td>
             </tr>
         </table>
 
-        <div class="section-header">Key Findings</div>
-        <ul class="findings">
+        {{-- 5. Monitored Records Table (1 to 5 records) --}}
+        <div class="section-title">MONITORED PLANTING RECORD DETAILS</div>
+        <table class="data-table">
+            <colgroup>
+                <col style="width: 8%">
+                <col style="width: 18%">
+                <col style="width: 16%">
+                <col style="width: 14%">
+                <col style="width: 8%">
+                <col style="width: 7%">
+                <col style="width: 7%">
+                <col style="width: 7%">
+                <col style="width: 7%">
+                <col style="width: 8%">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th rowspan="2" class="left">Date Planted</th>
+                    <th rowspan="2" class="left">Agency / Requester</th>
+                    <th rowspan="2" class="left">Area Planted</th>
+                    <th rowspan="2" class="left">Seedling Type</th>
+                    <th colspan="6" style="border-bottom: 1px solid #cbd5e1;">Monitoring Data</th>
+                </tr>
+                <tr>
+                    <th>Date</th>
+                    <th>Planted</th>
+                    <th>Replant</th>
+                    <th>Survived</th>
+                    <th>Died</th>
+                    <th>Survival %</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($records as $record)
+                    @php
+                        $req = $record->request;
+                        $partnerName = $req?->agency?->name ?? $req?->user?->name ?? $req?->requester_name ?? '—';
+                        $locationName = !empty($req?->barangay_code)
+                            ? \App\Support\TagoloanLocation::barangayName($req->barangay_code)
+                            : ($req?->location ?? '—');
+                        $rate = $record->seedlings_planted > 0 ? ($record->survived_count / $record->seedlings_planted * 100) : 0;
+                    @endphp
+                    <tr>
+                        <td class="left">{{ optional($req?->request_date)->format('m/d/Y') ?? $req?->created_at?->format('m/d/Y') ?? '—' }}</td>
+                        <td class="left">{{ $partnerName }}</td>
+                        <td class="left">{{ $locationName }}</td>
+                        <td class="left">{{ $record->seedling_type ?: '—' }}</td>
+                        <td>{{ optional($record->date_monitoring)->format('m/d/Y') ?? '—' }}</td>
+                        <td>{{ number_format($record->seedlings_planted) }}</td>
+                        <td>{{ number_format($record->replanted_count) }}</td>
+                        <td>{{ number_format($record->survived_count) }}</td>
+                        <td>{{ number_format($record->died_count) }}</td>
+                        <td>
+                            <span style="color: {{ $rate >= 70 ? '#059669' : '#dc2626' }}; font-weight: bold;">
+                                {{ number_format($rate, 2) }}%
+                            </span>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="10">No monitoring records match the selected filters.</td></tr>
+                @endforelse
+
+                @if($recordCount > 1)
+                    <tr class="total-row">
+                        <td colspan="5" class="left">OVERALL TOTALS ({{ $recordCount }} RECORDS)</td>
+                        <td>{{ number_format($totals['seedlings_planted']) }}</td>
+                        <td>{{ number_format($totals['replanted_count']) }}</td>
+                        <td>{{ number_format($totals['survived_count']) }}</td>
+                        <td>{{ number_format($totals['died_count']) }}</td>
+                        <td>{{ number_format($totals['survival_rate'], 2) }}%</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+
+        {{-- 6. Field Inspector Notes --}}
+        <div class="notes-box">
+            <div class="lbl">Additional Notes &amp; Observations</div>
+            <div class="notes-line"></div>
+            <div class="notes-line"></div>
+        </div>
+
+        {{-- 7. Signatures --}}
+        <table class="signatures">
+            <tr>
+                <td>
+                    <div class="sig-container">
+                        <div class="sig-role">Prepared By</div>
+                        <div class="sig-line">
+                            <div class="sig-name">Signature over Printed Name</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="sig-container">
+                        <div class="sig-role">Reviewed By</div>
+                        <div class="sig-line">
+                            <div class="sig-name">Signature over Printed Name</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="sig-container">
+                        <div class="sig-role">Approved By</div>
+                        <div class="sig-line">
+                            <div class="sig-name">Signature over Printed Name</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+@else
+    {{-- ========================================================================= --}}
+    {{-- 2-PAGE LAYOUT: BULK DOWNLOAD (6+ RECORDS)                                 --}}
+    {{-- ========================================================================= --}}
+
+    {{-- ========== PAGE 1: EXECUTIVE ENVIRONMENTAL IMPACT SUMMARY ========== --}}
+    <div class="page-break">
+
+        {{-- 1. Official Header --}}
+        <div class="header-container">
+            @if(!empty($headerDataUri))
+                <div style="text-align: center; margin: 0; padding: 0;">
+                    <img src="{{ $headerDataUri }}" alt="MENRO Tagoloan Letterhead" class="header-img">
+                </div>
+            @else
+                <table class="header-table">
+                    <tr>
+                        <td class="seal-td">
+                            @if(!empty($menroSealDataUri))
+                                <img src="{{ $menroSealDataUri }}" alt="MENRO Seal" class="seal-img">
+                            @endif
+                        </td>
+                        <td class="agency-td">
+                            <div class="agency-office-top">Municipal Environment and Natural Resources Office</div>
+                            <div class="agency-republic">Republic of the Philippines</div>
+                            <div class="agency-province">PROVINCE OF MISAMIS ORIENTAL</div>
+                            <div class="agency-municipality">MUNICIPALITY OF TAGOLOAN</div>
+                        </td>
+                        <td class="seal-td">
+                            @if(!empty($provinceSealDataUri))
+                                <img src="{{ $provinceSealDataUri }}" alt="Province Seal" class="seal-img">
+                            @endif
+                        </td>
+                    </tr>
+                </table>
+            @endif
+        </div>
+
+        {{-- 2. Report Title & Meta --}}
+        <div class="report-title-section">
+            <h1 class="report-title">PLANTING &amp; MONITORING REPORT</h1>
+            <div class="report-subtitle">Environmental Impact Summary | Official MENRO Document</div>
+            <div class="report-meta">Generated {{ $generatedAt->format('M d, Y g:i A') }}</div>
+        </div>
+
+        {{-- 3. Key Performance Indicators --}}
+        <div class="section-title">KEY PERFORMANCE INDICATORS</div>
+        <table class="kpi-grid">
+            <tr>
+                <td>
+                    <span class="kpi-val">{{ number_format($summary['record_count']) }}</span>
+                    <span class="kpi-lbl">MONITORING RECORDS</span>
+                </td>
+                <td>
+                    <span class="kpi-val">{{ number_format($totals['seedlings_planted']) }}</span>
+                    <span class="kpi-lbl">SEEDLINGS PLANTED</span>
+                </td>
+                <td>
+                    <span class="kpi-val">{{ number_format($totals['survived_count']) }}</span>
+                    <span class="kpi-lbl">SURVIVED</span>
+                </td>
+                <td>
+                    <span class="kpi-val">{{ number_format($totals['died_count']) }}</span>
+                    <span class="kpi-lbl">DIED</span>
+                </td>
+                <td>
+                    <span class="kpi-val">{{ number_format($totals['replanted_count']) }}</span>
+                    <span class="kpi-lbl">RE-PLANTED</span>
+                </td>
+                <td>
+                    <span class="kpi-val">{{ number_format($totals['survival_rate'], 2) }}%</span>
+                    <span class="kpi-lbl">SURVIVAL RATE</span>
+                </td>
+            </tr>
+        </table>
+
+        {{-- 4. Survival Rate & Monitoring Performance --}}
+        <div class="section-title">SURVIVAL RATE &amp; MONITORING PERFORMANCE</div>
+        <table class="performance-panel">
+            <tr>
+                <td class="perf-left">
+                    <div class="perf-overall-lbl">OVERALL SURVIVAL</div>
+                    <div class="perf-overall-val">{{ number_format($totals['survival_rate'], 2) }}%</div>
+                    <span class="survival-pill {{ $summary['survival_band'] }}">{{ $summary['survival_band_label'] }}</span>
+                    <div class="perf-overall-hint">Excellent: &gt;= 85% | Good: &gt;= 70% | Needs Attention: &lt; 70%</div>
+                </td>
+                <td class="perf-mid">
+                    <div class="perf-stat-group">
+                        <span class="perf-stat-lbl">Monitoring events</span>
+                        <span class="perf-stat-val">{{ number_format($summary['record_count']) }}</span>
+                    </div>
+                    <div class="perf-stat-group">
+                        <span class="perf-stat-lbl">Distinct sites / areas</span>
+                        <span class="perf-stat-val">{{ number_format($summary['site_count']) }}</span>
+                    </div>
+                </td>
+                <td class="perf-right">
+                    <div class="perf-stat-group">
+                        <span class="perf-stat-lbl">Agencies / requesters</span>
+                        <span class="perf-stat-val">{{ number_format($summary['agency_count']) }}</span>
+                    </div>
+                    <div class="perf-stat-group">
+                        <span class="perf-stat-lbl">Coverage period</span>
+                        <span class="perf-stat-val">
+                            @if($summary['date_from'] && $summary['date_to'])
+                                {{ $summary['date_from']->format('M d, Y') }} - {{ $summary['date_to']->format('M d, Y') }}
+                            @elseif($summary['date_from'])
+                                From {{ $summary['date_from']->format('M d, Y') }}
+                            @elseif($summary['date_to'])
+                                Until {{ $summary['date_to']->format('M d, Y') }}
+                            @else
+                                Overall Summary
+                            @endif
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        {{-- 5. Key Findings --}}
+        <div class="section-title">KEY FINDINGS</div>
+        <ul class="findings-list">
             @forelse($summary['findings'] as $finding)
                 <li>{{ $finding }}</li>
             @empty
@@ -611,16 +808,17 @@
             @endforelse
         </ul>
 
-        <div class="section-header">Geographic / Area Summary</div>
-        <table class="data-table">
+        {{-- 6. Geographic / Area Summary --}}
+        <div class="section-title">GEOGRAPHIC / AREA SUMMARY</div>
+        <table class="area-summary-table">
             <thead>
                 <tr>
-                    <th class="left" style="width:36%">Area / Barangay</th>
-                    <th style="width:12%">Records</th>
-                    <th style="width:16%">Planted</th>
-                    <th style="width:16%">Survived</th>
-                    <th style="width:10%">Died</th>
-                    <th style="width:10%">Survival %</th>
+                    <th class="left" style="width: 36%;">Area / Barangay</th>
+                    <th style="width: 12%;">Records</th>
+                    <th style="width: 15%;">Planted</th>
+                    <th style="width: 15%;">Survived</th>
+                    <th style="width: 10%;">Died</th>
+                    <th style="width: 12%;">Survival %</th>
                 </tr>
             </thead>
             <tbody>
@@ -644,28 +842,24 @@
                 @endforelse
             </tbody>
         </table>
-        
-        <table class="footer-table">
-            <tr>
-                <td class="left">MENRO Tagoloan | Official Document</td>
-                <td class="right">Page 1 of 2</td>
-            </tr>
-        </table>
+
     </div>
 
-    {{-- ========== PAGE 2: Detailed Records ========== --}}
+    {{-- ========== PAGE 2: DETAILED RECORDS, OBSERVATIONS & SIGNATURES ========== --}}
     <div>
-        <table class="header-table" style="margin-bottom: 20px;">
-            <tr>
-                <td class="agency-td">
-                    <div class="agency-name">MENRO TAGOLOAN</div>
-                    <div class="agency-republic">Planting &amp; Monitoring Detailed Records</div>
-                </td>
-                <td class="title-td">
-                    <div class="doc-subtitle">Generated: {{ $generatedAt->format('M d, Y') }}</div>
-                </td>
-            </tr>
-        </table>
+        <div style="width: 100%; border-bottom: 2px solid #059669; padding-bottom: 4px; margin-bottom: 6px;">
+            <table style="width: 100%; border-collapse: collapse; margin: 0; padding: 0;">
+                <tr>
+                    <td style="text-align: left; vertical-align: bottom; padding: 0;">
+                        <div style="font-size: 11px; font-weight: bold; color: #064e3b; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2;">MENRO TAGOLOAN</div>
+                        <div style="font-size: 8px; color: #475569; letter-spacing: 0.3px; line-height: 1.2; margin-top: 1px;">Planting &amp; Monitoring Detailed Records</div>
+                    </td>
+                    <td style="text-align: right; vertical-align: bottom; padding: 0;">
+                        <div style="font-size: 7.5px; color: #64748b;">Generated: {{ $generatedAt->format('M d, Y') }}</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
         <table class="data-table">
             <colgroup>
@@ -699,20 +893,25 @@
             </thead>
             <tbody>
                 @forelse($records as $record)
+                    @php
+                        $req = $record->request;
+                        $partnerName = $req?->agency?->name ?? $req?->user?->name ?? $req?->requester_name ?? '—';
+                        $locationName = !empty($req?->barangay_code)
+                            ? \App\Support\TagoloanLocation::barangayName($req->barangay_code)
+                            : ($req?->location ?? '—');
+                        $rate = $record->seedlings_planted > 0 ? ($record->survived_count / $record->seedlings_planted * 100) : 0;
+                    @endphp
                     <tr>
-                        <td class="left">{{ optional($record->request?->request_date)->format('m/d/Y') }}</td>
-                        <td class="left">{{ $record->request?->agency?->name ?? $record->request?->requester_name ?? '-' }}</td>
-                        <td class="left">{{ $record->request?->location }}</td>
-                        <td class="left">{{ $record->seedling_type }}</td>
-                        <td>{{ optional($record->date_monitoring)->format('m/d/Y') }}</td>
-                        <td>{{ $record->seedlings_planted }}</td>
-                        <td>{{ $record->replanted_count }}</td>
-                        <td>{{ $record->survived_count }}</td>
-                        <td>{{ $record->died_count }}</td>
+                        <td class="left">{{ optional($req?->request_date)->format('m/d/Y') ?? $req?->created_at?->format('m/d/Y') ?? '—' }}</td>
+                        <td class="left">{{ $partnerName }}</td>
+                        <td class="left">{{ $locationName }}</td>
+                        <td class="left">{{ $record->seedling_type ?: '—' }}</td>
+                        <td>{{ optional($record->date_monitoring)->format('m/d/Y') ?? '—' }}</td>
+                        <td>{{ number_format($record->seedlings_planted) }}</td>
+                        <td>{{ number_format($record->replanted_count) }}</td>
+                        <td>{{ number_format($record->survived_count) }}</td>
+                        <td>{{ number_format($record->died_count) }}</td>
                         <td>
-                            @php
-                                $rate = $record->seedlings_planted > 0 ? ($record->survived_count / $record->seedlings_planted * 100) : 0;
-                            @endphp
                             <span style="color: {{ $rate >= 70 ? '#059669' : '#dc2626' }}; font-weight: bold;">
                                 {{ number_format($rate, 2) }}%
                             </span>
@@ -767,13 +966,8 @@
                 </td>
             </tr>
         </table>
-
-        <table class="footer-table">
-            <tr>
-                <td class="left">MENRO Tagoloan | Official Document</td>
-                <td class="right">Page 2 of 2</td>
-            </tr>
-        </table>
     </div>
+@endif
+
 </body>
 </html>

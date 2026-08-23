@@ -30,7 +30,7 @@ class AgencyPolicy
             return true;
         }
 
-        // Admins may edit their own linked agency (details, soil doc, etc.).
+        // Admins may edit their own linked agency details.
         return $user->isAdmin()
             && $user->agency_id !== null
             && (int) $user->agency_id === (int) $agency->id;

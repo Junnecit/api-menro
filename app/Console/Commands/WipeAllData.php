@@ -38,7 +38,6 @@ class WipeAllData extends Command
 
     /** @var list<string> */
     private const STORAGE_DIRS = [
-        'agency-soil-docs',
         'planting-request-docs',
         'tree-photos',
         'report-files',

@@ -24,18 +24,23 @@
         /* --- HEADER --- */
         .header-container {
             width: 100%;
-            margin-bottom: 8px;
-            border-bottom: 2.5px solid #059669;
-            padding-bottom: 6px;
+            margin-bottom: 6px;
+            border-bottom: 2px solid #059669;
+            padding-bottom: 4px;
+            text-align: center;
         }
         .header-img {
-            width: 100%;
+            width: 78%;
+            max-width: 500px;
             height: auto;
-            max-height: 82px;
+            display: block;
+            margin: 0 auto;
+            padding: 0;
         }
         .header-table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 2px;
         }
         .header-table td {
             vertical-align: middle;
@@ -292,24 +297,52 @@
         .notice-box strong {
             color: #064e3b;
         }
+        footer {
+            position: fixed;
+            bottom: -18px;
+            left: 0;
+            right: 0;
+            height: 16px;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 3px;
+        }
         .page-footer {
-            margin-top: 4px;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 2px;
+            width: 100%;
+            border-collapse: collapse;
             font-size: 7.5px;
-            color: #94a3b8;
+            color: #64748b;
         }
         .page-footer td.right {
             text-align: right;
+            padding-right: 65px;
         }
     </style>
 </head>
 <body>
 
+    <footer>
+        <table class="page-footer">
+            <tr>
+                <td>Republic of the Philippines &bull; Province of Misamis Oriental &bull; Municipality of Tagoloan &bull; MENRO Official Form</td>
+                <td class="right">Doc Ref: MENRO-PR-FORM-2026</td>
+            </tr>
+        </table>
+    </footer>
+
+    {{-- Dynamic Page Numbering in Dompdf --}}
+    <script type="text/php">
+        if (isset($pdf)) {
+            $font = $fontMetrics->getFont("Helvetica", "normal");
+            $size = 7.5;
+            $color = array(0.39, 0.45, 0.55);
+            $pdf->page_text($pdf->get_width() - 85, $pdf->get_height() - 20, "Page {PAGE_NUM} of {PAGE_COUNT}", $font, $size, $color);
+        }
+    </script>
+
     {{-- ========== OFFICIAL MENRO HEADER ========== --}}
     <div class="header-container">
         @if(!empty($headerDataUri))
-            <div style="text-align: center;">
+            <div style="text-align: center; margin: 0; padding: 0;">
                 <img src="{{ $headerDataUri }}" alt="MENRO Tagoloan Letterhead" class="header-img">
             </div>
         @else
@@ -595,13 +628,6 @@
     <div class="notice-box">
         <strong>Submission Guidelines:</strong> Fill out the underlines above or print and complete by hand. For an editable digital Word version, download the official DOCX template. Submit completed applications to <em>MENRO Tagoloan, Municipal Hall, Tagoloan, Misamis Oriental</em> or upload via the <em>Tree Monitoring Web Portal</em>.
     </div>
-
-    <table class="page-footer" style="width: 100%;">
-        <tr>
-            <td>Republic of the Philippines &bull; Province of Misamis Oriental &bull; Municipality of Tagoloan &bull; MENRO Official Form</td>
-            <td class="right">Doc Ref: MENRO-PR-FORM-2026</td>
-        </tr>
-    </table>
 
 </body>
 </html>

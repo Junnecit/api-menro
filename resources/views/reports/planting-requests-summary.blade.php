@@ -5,8 +5,8 @@
     <title>MENRO Planting Requests Summary Report</title>
     <style>
         @page {
-            margin: 24px 30px 26px 30px;
-            size: portrait;
+            margin: 20px 28px 32px 28px;
+            size: legal portrait;
         }
         * {
             box-sizing: border-box;
@@ -21,61 +21,107 @@
             padding: 0;
         }
 
-        /* --- HEADER --- */
+        /* --- FIXED BOTTOM FOOTER --- */
+        footer {
+            position: fixed;
+            bottom: -22px;
+            left: 0;
+            right: 0;
+            height: 16px;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 3px;
+        }
+        .footer-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .footer-table td {
+            font-size: 7.5px;
+            color: #64748b;
+            vertical-align: middle;
+            padding: 0;
+        }
+        .footer-table td.left {
+            text-align: left;
+        }
+        .footer-table td.right {
+            text-align: right;
+            padding-right: 65px; /* Room for dynamic page number */
+        }
+
+        /* --- OFFICIAL HEADER --- */
         .header-container {
             width: 100%;
-            margin-bottom: 10px;
-            border-bottom: 2.5px solid #059669;
-            padding-bottom: 8px;
+            margin-bottom: 6px;
+            border-bottom: 2px solid #059669;
+            padding-bottom: 4px;
+            text-align: center;
         }
         .header-img {
-            width: 100%;
+            width: 78%;
+            max-width: 500px;
             height: auto;
-            max-height: 75px;
+            display: block;
+            margin: 0 auto;
+            padding: 0;
         }
         .header-table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 2px;
         }
         .header-table td {
             vertical-align: middle;
         }
         .seal-td {
-            width: 55px;
+            width: 62px;
             text-align: center;
         }
         .seal-img {
-            width: 48px;
-            height: 48px;
+            width: 56px;
+            height: 56px;
         }
         .agency-td {
             text-align: center;
-            padding: 0 8px;
+            padding: 0 10px;
         }
         .agency-republic {
-            font-size: 7.5px;
+            font-size: 8.5px;
             color: #64748b;
             text-transform: uppercase;
             letter-spacing: 0.8px;
+            line-height: 1.2;
         }
-        .agency-name {
+        .agency-province {
             font-size: 9.5px;
+            color: #334155;
             font-weight: bold;
-            color: #0f172a;
             letter-spacing: 0.3px;
+            line-height: 1.2;
+            margin-top: 1px;
         }
-        .agency-office {
+        .agency-municipality {
             font-size: 12px;
             font-weight: bold;
-            color: #064e3b;
+            color: #0f172a;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
             margin-top: 1px;
+        }
+        .agency-office {
+            font-size: 13.5px;
+            font-weight: bold;
+            color: #064e3b;
+            margin-top: 2px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            line-height: 1.2;
         }
-        .agency-sub {
-            font-size: 7.5px;
+        .agency-tagline {
+            font-size: 8px;
             color: #059669;
             font-style: italic;
+            margin-top: 1px;
         }
 
         /* --- TITLE --- */
@@ -83,9 +129,9 @@
             background-color: #064e3b;
             color: #ffffff;
             text-align: center;
-            padding: 5px 10px;
-            border-radius: 4px;
-            margin-bottom: 7px;
+            padding: 5px 12px;
+            border-radius: 3px;
+            margin-bottom: 6px;
         }
         .doc-title {
             font-size: 11.5px;
@@ -97,19 +143,19 @@
         .doc-subtitle {
             font-size: 7.5px;
             color: #a7f3d0;
-            margin-top: 2px;
+            margin-top: 1.5px;
         }
 
         /* --- META BAR --- */
         .meta-bar {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-left: 4px solid #059669;
-            padding: 4px 8px;
-            margin-bottom: 10px;
-            font-size: 7.5px;
-            color: #475569;
+            border-left: 3.5px solid #059669;
             border-radius: 3px;
+            padding: 4px 8px;
+            margin-bottom: 8px;
+            font-size: 8px;
+            color: #475569;
         }
         .meta-bar strong { color: #0f172a; font-weight: bold; }
 
@@ -118,68 +164,81 @@
             width: 100%;
             border-collapse: separate;
             border-spacing: 5px 0;
-            margin: 0 -5px 10px -5px;
             table-layout: fixed;
+            margin-bottom: 8px;
         }
         .kpi-table td {
             width: 20%;
-            background-color: #ffffff;
+            background-color: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-top: 3px solid #059669;
-            border-radius: 4px;
+            border-top: 2.5px solid #059669;
+            border-radius: 3px;
             padding: 6px 3px;
-            text-align: center;
-        }
-        .kpi-val { display: block; font-size: 14px; font-weight: bold; color: #0f172a; margin-bottom: 1px; }
-        .kpi-lbl { display: block; font-size: 7px; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
-        .kpi-sub { display: block; font-size: 6.5px; color: #94a3b8; margin-top: 1px; }
-
-        /* --- DATA TABLE --- */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 7.5px;
-            margin-bottom: 10px;
-        }
-        .data-table th, .data-table td {
-            padding: 4px 4px;
-            border: 1px solid #cbd5e1;
             text-align: center;
             vertical-align: middle;
         }
-        .data-table th {
-            background-color: #f1f5f9;
-            color: #064e3b;
-            font-weight: bold;
-            font-size: 7px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
+        .kpi-val { display: block; font-size: 12.5px; font-weight: bold; color: #0f172a; line-height: 1.1; }
+        .kpi-lbl { display: block; font-size: 7px; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; font-weight: bold; margin-top: 2px; }
+        .kpi-sub { display: block; font-size: 6.5px; color: #94a3b8; margin-top: 1px; }
+
+        /* --- DATA TABLE --- */
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+            font-size: 8px;
         }
-        .data-table td.left { text-align: left; }
-        .data-table tbody tr.parent-row { background-color: #ffffff; }
-        .data-table tbody tr.sub-row { background-color: #f8fafc; }
-        .data-table tbody tr.total-row {
+        table.data-table thead {
+            display: table-header-group;
+        }
+        table.data-table tr {
+            page-break-inside: avoid;
+        }
+        table.data-table th, table.data-table td {
+            padding: 4.5px 5px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+            text-align: center;
+        }
+        table.data-table th {
+            background-color: #f1f5f9;
+            color: #334155;
+            text-transform: uppercase;
+            font-size: 7.5px;
+            font-weight: bold;
+            letter-spacing: 0.4px;
+            border-top: 1px solid #cbd5e1;
+            border-bottom: 1.5px solid #94a3b8;
+        }
+        table.data-table td.left, table.data-table th.left { text-align: left; }
+        table.data-table tbody tr:nth-child(even) { background-color: #f8fafc; }
+        table.data-table tbody tr.parent-row { background-color: #ffffff; }
+        table.data-table tbody tr.sub-row { background-color: #f8fafc; }
+        table.data-table tbody tr.total-row {
             background-color: #ecfdf5;
+        }
+        table.data-table tbody tr.total-row td {
             font-weight: bold;
             color: #064e3b;
-            border-top: 2px solid #059669;
+            border-top: 1.5px solid #059669;
+            border-bottom: 1.5px solid #059669;
         }
 
         /* --- SUB REQUEST FORMATTING --- */
         .sub-arrow {
             color: #059669;
             font-weight: bold;
-            font-size: 9px;
+            font-size: 8.5px;
             display: inline-block;
-            margin-right: 2px;
+            margin-right: 3px;
         }
         .sub-no {
-            font-family: "Courier New", monospace;
+            font-family: "Helvetica", "Arial", sans-serif;
             font-weight: bold;
-            color: #334155;
+            color: #475569;
         }
         .req-no {
-            font-family: "Courier New", monospace;
+            font-family: "Helvetica", "Arial", sans-serif;
             font-weight: bold;
             color: #0f172a;
         }
@@ -187,7 +246,7 @@
         /* --- BADGES --- */
         .badge-sub {
             display: inline-block;
-            font-size: 6px;
+            font-size: 6.5px;
             font-weight: bold;
             color: #475569;
             background-color: #e2e8f0;
@@ -200,7 +259,7 @@
         }
         .badge-parent {
             display: inline-block;
-            font-size: 6px;
+            font-size: 6.5px;
             font-weight: bold;
             color: #065f46;
             background-color: #d1fae5;
@@ -215,13 +274,14 @@
         /* --- STATUS PILL --- */
         .status-pill {
             display: inline-block;
-            padding: 1.5px 5px;
-            font-size: 6.5px;
+            padding: 1.5px 6px;
+            font-size: 7px;
             font-weight: bold;
             text-transform: uppercase;
-            border-radius: 6px;
+            border-radius: 8px;
             color: #ffffff;
             letter-spacing: 0.3px;
+            background-color: #64748b;
         }
         .status-approved { background-color: #059669; }
         .status-pending { background-color: #d97706; }
@@ -230,76 +290,91 @@
         .status-rejected { background-color: #dc2626; }
 
         /* --- SIGNATURES --- */
-        .sig-table {
+        .signatures {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 18px;
+            border-collapse: separate;
+            border-spacing: 12px 0;
+            table-layout: fixed;
+            margin-top: 14px;
             page-break-inside: avoid;
         }
-        .sig-table td {
+        .signatures td {
             width: 33.33%;
-            padding: 0 10px;
-            vertical-align: top;
             text-align: center;
+            padding: 0;
+            vertical-align: top;
+        }
+        .sig-container {
+            position: relative;
         }
         .sig-role {
             font-size: 7.5px;
-            font-weight: bold;
             color: #064e3b;
+            font-weight: bold;
             text-transform: uppercase;
-            margin-bottom: 24px;
-            text-align: center;
-            letter-spacing: 0.3px;
+            text-align: left;
+            margin-bottom: 20px;
+            letter-spacing: 0.4px;
         }
         .sig-line {
-            border-top: 1px solid #1e293b;
+            border-top: 1px solid #334155;
             padding-top: 3px;
         }
         .sig-name {
-            font-size: 8px;
-            font-weight: bold;
-            color: #0f172a;
+            font-size: 7.5px;
+            color: #475569;
             text-transform: uppercase;
         }
-
-        .footer-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 12px;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 4px;
-            font-size: 7px;
-            color: #94a3b8;
-        }
-        .footer-table td.right { text-align: right; }
     </style>
 </head>
 <body>
 
+    {{-- ========================================================================= --}}
+    {{-- OFFICIAL FIXED BOTTOM FOOTER (PERSISTENT ACROSS ALL PAGES)                --}}
+    {{-- ========================================================================= --}}
+    <footer>
+        <table class="footer-table">
+            <tr>
+                <td class="left">MENRO Tagoloan &bull; Official Planting Requests Summary</td>
+                <td class="right"></td>
+            </tr>
+        </table>
+    </footer>
+
+    {{-- Dynamic Page Numbering in Dompdf --}}
+    <script type="text/php">
+        if (isset($pdf)) {
+            $font = $fontMetrics->getFont("Helvetica", "normal");
+            $size = 7.5;
+            $color = array(0.39, 0.45, 0.55);
+            $pdf->page_text($pdf->get_width() - 85, $pdf->get_height() - 20, "Page {PAGE_NUM} of {PAGE_COUNT}", $font, $size, $color);
+        }
+    </script>
+
     {{-- ========== OFFICIAL MENRO HEADER ========== --}}
     <div class="header-container">
         @if(!empty($headerDataUri))
-            <div style="text-align: center;">
+            <div style="text-align: center; margin: 0; padding: 0;">
                 <img src="{{ $headerDataUri }}" alt="MENRO Tagoloan Letterhead" class="header-img">
             </div>
         @else
             <table class="header-table">
                 <tr>
                     <td class="seal-td">
-                        @if(!empty($provinceSealDataUri))
-                            <img src="{{ $provinceSealDataUri }}" alt="Province Seal" class="seal-img">
+                        @if(!empty($menroSealDataUri))
+                            <img src="{{ $menroSealDataUri }}" alt="MENRO Seal" class="seal-img">
                         @endif
                     </td>
                     <td class="agency-td">
                         <div class="agency-republic">Republic of the Philippines</div>
-                        <div class="agency-name">PROVINCE OF MISAMIS ORIENTAL</div>
-                        <div class="agency-name">MUNICIPALITY OF TAGOLOAN</div>
+                        <div class="agency-province">Province of Misamis Oriental</div>
+                        <div class="agency-municipality">MUNICIPALITY OF TAGOLOAN</div>
                         <div class="agency-office">Municipal Environment and Natural Resources Office</div>
-                        <div class="agency-sub">Planting Requests &amp; Project Summary Monitoring</div>
+                        <div class="agency-tagline">MENRO Tagoloan &bull; Protecting &amp; Preserving Our Natural Resources</div>
                     </td>
                     <td class="seal-td">
-                        @if(!empty($menroSealDataUri))
-                            <img src="{{ $menroSealDataUri }}" alt="MENRO Seal" class="seal-img">
+                        @if(!empty($provinceSealDataUri))
+                            <img src="{{ $provinceSealDataUri }}" alt="Province Seal" class="seal-img">
                         @endif
                     </td>
                 </tr>
@@ -309,13 +384,13 @@
 
     {{-- ========== TITLE ========== --}}
     <div class="doc-title-bar">
-        <div class="doc-title">Planting Requests Summary Report</div>
+        <h1 class="doc-title">Planting Requests Summary Report</h1>
         <div class="doc-subtitle">Consolidated Requests &amp; Seedling Target Allocations &bull; Tagoloan, Misamis Oriental</div>
     </div>
 
     <div class="meta-bar">
         Generated: <strong>{{ $generatedAt->format('M d, Y g:i A') }}</strong>
-        &nbsp;|&nbsp; Reports: <strong>{{ $totals['total_requests'] }} Total</strong> ({{ $totals['parent_requests_count'] }} Main, {{ $totals['sub_requests_count'] }} Sub-request{{ $totals['sub_requests_count'] != 1 ? 's' : '' }})
+        &nbsp;|&nbsp; Scope: <strong>{{ $totals['total_requests'] }} Total Entries</strong> ({{ $totals['parent_requests_count'] }} Main, {{ $totals['sub_requests_count'] }} Sub-request{{ $totals['sub_requests_count'] != 1 ? 's' : '' }})
         @if(!empty($filterNote))
             &nbsp;|&nbsp; Filter: <strong>{{ $filterNote }}</strong>
         @endif
@@ -354,16 +429,26 @@
 
     {{-- ========== DETAILED REQUESTS TABLE ========== --}}
     <table class="data-table">
+        <colgroup>
+            <col style="width: 10%">
+            <col style="width: 24%">
+            <col style="width: 16%">
+            <col style="width: 15%">
+            <col style="width: 9%">
+            <col style="width: 8%">
+            <col style="width: 9%">
+            <col style="width: 9%">
+        </colgroup>
         <thead>
             <tr>
-                <th style="width: 9%;">Req No.</th>
-                <th class="left" style="width: 25%;">Project Name &amp; Structure</th>
-                <th class="left" style="width: 16%;">Partner / Requester</th>
-                <th class="left" style="width: 14%;">Barangay / Site</th>
-                <th style="width: 8%;">Habitat</th>
-                <th style="width: 9%;">Target Trees</th>
-                <th style="width: 9%;">Date Filed</th>
-                <th style="width: 10%;">Status</th>
+                <th class="left">Req No.</th>
+                <th class="left">Project Name &amp; Structure</th>
+                <th class="left">Partner / Requester</th>
+                <th class="left">Barangay / Site</th>
+                <th>Habitat</th>
+                <th>Target Trees</th>
+                <th>Date Filed</th>
+                <th>Status</th>
             </tr>
         </thead>
         <tbody>
@@ -371,8 +456,15 @@
                 @php
                     $req = $row->request;
                     $isSub = $row->is_sub_request;
-                    $sRaw = (string)($req->status ?? 'pending');
-                    $sNormalized = str_replace(' ', '_', strtolower($sRaw));
+                    $partnerName = $req?->agency?->name ?? $req?->user?->name ?? $req?->requester_name ?? '—';
+                    $locationName = !empty($req?->barangay_code)
+                        ? \App\Support\TagoloanLocation::barangayName($req->barangay_code)
+                        : ($req?->location ?? '—');
+                    $habitatVal = $req?->habitat instanceof \App\Enums\PlantingHabitat
+                        ? $req->habitat->value
+                        : ((string) ($req?->habitat ?? 'terrestrial'));
+                    $sRaw = (string)($req?->status ?? 'pending');
+                    $sNormalized = str_replace([' ', '-'], '_', strtolower($sRaw));
                     $sLabels = [
                         'pending' => 'Pending',
                         'approved' => 'Approved',
@@ -382,17 +474,17 @@
                     ];
                 @endphp
                 <tr class="{{ $isSub ? 'sub-row' : 'parent-row' }}">
-                    <td>
+                    <td class="left">
                         @if($isSub)
-                            <span class="sub-arrow">&#8627;</span><span class="sub-no">{{ $req->request_no ?? 'REQ-' . $req->id }}</span>
+                            <span class="sub-arrow">&rarr;</span><span class="sub-no">{{ $req?->request_no ?? ('REQ-' . $req?->id) }}</span>
                         @else
-                            <span class="req-no">{{ $req->request_no ?? 'REQ-' . $req->id }}</span>
+                            <span class="req-no">{{ $req?->request_no ?? ('REQ-' . $req?->id) }}</span>
                         @endif
                     </td>
                     <td class="left">
                         <div style="{{ $isSub ? 'padding-left: 6px;' : '' }}">
                             <span style="font-weight: bold; color: {{ $isSub ? '#334155' : '#0f172a' }};">
-                                {{ $req->project_name }}
+                                {{ $req?->project_name ?? 'Untitled Project' }}
                             </span>
                             @if($isSub)
                                 <span class="badge-sub">Sub-request</span>
@@ -401,11 +493,11 @@
                             @endif
                         </div>
                     </td>
-                    <td class="left">{{ $req->agency?->name ?? $req->requester_name ?? '-' }}</td>
-                    <td class="left">{{ $req->barangay_code ? \App\Support\TagoloanLocation::barangayName($req->barangay_code) : ($req->location ?? '-') }}</td>
-                    <td>{{ ucfirst($req->habitat?->value ?? 'Terrestrial') }}</td>
-                    <td><strong>{{ number_format((int)$req->target_trees) }}</strong></td>
-                    <td>{{ optional($req->request_date)->format('m/d/Y') ?? $req->created_at->format('m/d/Y') }}</td>
+                    <td class="left">{{ $partnerName }}</td>
+                    <td class="left">{{ $locationName }}</td>
+                    <td>{{ ucfirst($habitatVal) }}</td>
+                    <td><strong>{{ number_format((int)($req?->target_trees ?? 0)) }}</strong></td>
+                    <td>{{ optional($req?->request_date)->format('m/d/Y') ?? $req?->created_at?->format('m/d/Y') ?? '—' }}</td>
                     <td>
                         <span class="status-pill status-{{ $sNormalized }}">{{ $sLabels[$sNormalized] ?? ucfirst($sRaw) }}</span>
                     </td>
@@ -417,7 +509,7 @@
             @endforelse
             <tr class="total-row">
                 <td colspan="5" class="left">
-                    TOTAL CONSOLIDATED REPORT ({{ $totals['total_requests'] }} {{ $totals['total_requests'] === 1 ? 'Report' : 'Reports' }} in Total: {{ $totals['parent_requests_count'] }} Main, {{ $totals['sub_requests_count'] }} Sub-request{{ $totals['sub_requests_count'] != 1 ? 's' : '' }})
+                    TOTAL CONSOLIDATED REPORT ({{ $totals['total_requests'] }} {{ $totals['total_requests'] === 1 ? 'Entry' : 'Entries' }} in Total: {{ $totals['parent_requests_count'] }} Main, {{ $totals['sub_requests_count'] }} Sub-request{{ $totals['sub_requests_count'] != 1 ? 's' : '' }})
                 </td>
                 <td>{{ number_format($totals['target_trees']) }}</td>
                 <td colspan="2">{{ number_format($totals['total_requests']) }} Records</td>
@@ -426,33 +518,32 @@
     </table>
 
     {{-- ========== SIGNATURES ========== --}}
-    <table class="sig-table">
+    <table class="signatures">
         <tr>
             <td>
-                <div class="sig-role">Prepared By</div>
-                <div class="sig-line">
-                    <div class="sig-name">MENRO Records Officer</div>
+                <div class="sig-container">
+                    <div class="sig-role">Prepared By</div>
+                    <div class="sig-line">
+                        <div class="sig-name">MENRO Records Officer</div>
+                    </div>
                 </div>
             </td>
             <td>
-                <div class="sig-role">Reviewed By</div>
-                <div class="sig-line">
-                    <div class="sig-name">Forestry Section Head</div>
+                <div class="sig-container">
+                    <div class="sig-role">Reviewed By</div>
+                    <div class="sig-line">
+                        <div class="sig-name">Forestry Section Head</div>
+                    </div>
                 </div>
             </td>
             <td>
-                <div class="sig-role">Approved By</div>
-                <div class="sig-line">
-                    <div class="sig-name">MENRO Officer</div>
+                <div class="sig-container">
+                    <div class="sig-role">Approved By</div>
+                    <div class="sig-line">
+                        <div class="sig-name">MENRO Officer</div>
+                    </div>
                 </div>
             </td>
-        </tr>
-    </table>
-
-    <table class="footer-table">
-        <tr>
-            <td>MENRO Tagoloan &bull; Official Summary Monitoring Report</td>
-            <td class="right">Generated on {{ now()->format('M d, Y') }}</td>
         </tr>
     </table>
 
