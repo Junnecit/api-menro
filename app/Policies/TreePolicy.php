@@ -25,20 +25,11 @@ class TreePolicy
 
     public function update(User $user, Tree $tree): bool
     {
-        // Planters become read-only after upload; monitors/admins may edit.
-        if ($user->isPlanter()) {
-            return false;
-        }
-
         return $this->owns($user, $tree);
     }
 
     public function delete(User $user, Tree $tree): bool
     {
-        if ($user->isPlanter()) {
-            return false;
-        }
-
         return $this->owns($user, $tree);
     }
 

@@ -154,8 +154,15 @@ class UserController extends Controller
         }
 
         $wasPending = $user->status === UserStatus::Pending;
+        $roleChanged = $request->filled('role_id') && (int) $request->role_id !== (int) $user->role_id;
+        $passwordChanged = ! empty($data['password']);
+        $statusChanged = array_key_exists('status', $data) && $data['status'] !== $user->status;
 
         $user->update($data);
+
+        if ($roleChanged || $passwordChanged || ($statusChanged && $user->status !== UserStatus::Active)) {
+            $user->tokens()->delete();
+        }
 
         if ($wasPending && $user->status === UserStatus::Active) {
             // Approval implies the account may sign in; backfill verification so
