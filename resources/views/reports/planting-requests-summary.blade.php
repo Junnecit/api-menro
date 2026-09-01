@@ -389,7 +389,7 @@
     </div>
 
     <div class="meta-bar">
-        Generated: <strong>{{ $generatedAt->format('M d, Y g:i A') }}</strong>
+        Generated: <strong>{{ ($generatedAt ?? now())->format('M d, Y g:i A') }}</strong>
         &nbsp;|&nbsp; Scope: <strong>{{ $totals['total_requests'] }} Total Entries</strong> ({{ $totals['parent_requests_count'] }} Main, {{ $totals['sub_requests_count'] }} Sub-request{{ $totals['sub_requests_count'] != 1 ? 's' : '' }})
         @if(!empty($filterNote))
             &nbsp;|&nbsp; Filter: <strong>{{ $filterNote }}</strong>

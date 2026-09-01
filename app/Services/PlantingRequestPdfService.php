@@ -54,6 +54,7 @@ class PlantingRequestPdfService
         ], true)->loadView('reports.planting-request-document', [
             'request' => $request,
             'barangayName' => $barangayName,
+            'generatedAt' => now(),
             'headerDataUri' => $this->imageToDataUri(public_path('images/menro-header.png')),
             'menroSealDataUri' => $this->imageToDataUri(public_path('images/menro-seal.png')),
             'provinceSealDataUri' => $this->imageToDataUri(public_path('images/province-seal.png')),

@@ -8,6 +8,8 @@ use App\Exceptions\UnauthorizedGoogleEmailException;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
 
@@ -27,17 +29,78 @@ class GoogleAuthService
         return $driver;
     }
 
-    public function getRedirectUrl(): string
+    public function getRedirectUrl(?string $state = null): string
     {
-        return $this->provider()->stateless()->redirect()->getTargetUrl();
+        $provider = $this->provider()->stateless();
+        if ($state) {
+            $provider->with(['state' => $state]);
+        }
+
+        return $provider->redirect()->getTargetUrl();
     }
 
     public function findOrCreateUser(): User
     {
         $googleUser = $this->provider()->stateless()->user();
 
-        $user = User::where('google_id', $googleUser->getId())
-            ->orWhere('email', $googleUser->getEmail())
+        return $this->findOrCreateUserFromData(
+            googleId: $googleUser->getId(),
+            email: $googleUser->getEmail(),
+            name: $googleUser->getName()
+        );
+    }
+
+    /**
+     * Verify Google ID token against Google's tokeninfo API and find/create user.
+     */
+    public function findOrCreateUserFromIdToken(string $idToken): User
+    {
+        $http = Http::timeout(10);
+        if (app()->environment('local', 'testing')) {
+            $http = $http->withoutVerifying();
+        }
+
+        $response = $http->get('https://oauth2.googleapis.com/tokeninfo', [
+            'id_token' => $idToken,
+        ]);
+
+        if (! $response->successful()) {
+            Log::warning('Google ID token verification failed', [
+                'status' => $response->status(),
+                'body' => $response->json(),
+            ]);
+            throw new \InvalidArgumentException('Invalid or expired Google token.');
+        }
+
+        $payload = $response->json();
+
+        $email = $payload['email'] ?? null;
+        $googleId = $payload['sub'] ?? null;
+        $name = $payload['name'] ?? null;
+        $emailVerified = filter_var($payload['email_verified'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        if (! $googleId || ! $email) {
+            throw new \InvalidArgumentException('Google token payload is missing email or user ID.');
+        }
+
+        if (! $emailVerified) {
+            throw new \InvalidArgumentException('Google account email is not verified.');
+        }
+
+        return $this->findOrCreateUserFromData(
+            googleId: $googleId,
+            email: $email,
+            name: $name
+        );
+    }
+
+    /**
+     * Common user lookup, status validation, and account creation logic.
+     */
+    public function findOrCreateUserFromData(string $googleId, string $email, ?string $name = null): User
+    {
+        $user = User::where('google_id', $googleId)
+            ->orWhere('email', $email)
             ->first();
 
         if ($user) {
@@ -46,32 +109,32 @@ class GoogleAuthService
             }
 
             if (! $user->google_id) {
-                $user->update(['google_id' => $googleUser->getId()]);
+                $user->update(['google_id' => $googleId]);
             }
 
             return $user;
         }
 
         // New Google accounts only — fail closed outside local when allowlists are empty.
-        if (! $this->isEmailAuthorized($googleUser->getEmail())) {
-            throw new UnauthorizedGoogleEmailException($googleUser->getEmail());
+        if (! $this->isEmailAuthorized($email)) {
+            throw new UnauthorizedGoogleEmailException($email);
         }
 
         $defaultRole = Role::where('slug', 'user')->first() ?? Role::first();
 
-        $baseName = trim($googleUser->getName() ?? '') ?: explode('@', $googleUser->getEmail())[0];
-        $name = $baseName;
+        $baseName = trim($name ?? '') ?: explode('@', $email)[0];
+        $finalName = $baseName;
         $counter = 1;
-        while (User::where('name', $name)->exists()) {
-            $name = "{$baseName} ({$counter})";
+        while (User::where('name', $finalName)->exists()) {
+            $finalName = "{$baseName} ({$counter})";
             $counter++;
         }
 
         return User::create([
             'role_id' => $defaultRole?->id,
-            'name' => $name,
-            'email' => $googleUser->getEmail(),
-            'google_id' => $googleUser->getId(),
+            'name' => $finalName,
+            'email' => $email,
+            'google_id' => $googleId,
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
         ]);

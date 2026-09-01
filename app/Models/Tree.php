@@ -74,15 +74,21 @@ class Tree extends Model
 
     /**
      * Limit the query to the trees the given user may see. Super Admins see
-     * every tree. An admin (and their managed field users) see trees recorded
-     * in their agency pool, plus every tree tagged with that agency — keeping
-     * each agency partitioned from the others'. Unassigned
-     * regular users see only the trees they recorded.
+     * every tree. Planters see only the trees they recorded themselves.
+     * An admin (and their monitors) see trees recorded in their agency pool,
+     * plus every tree tagged with that agency — keeping each agency
+     * partitioned from the others'. Unassigned regular users see only
+     * the trees they recorded.
      */
     public function scopeOwnedBy($query, User $user)
     {
         if ($user->isSuperAdmin()) {
             return $query;
+        }
+
+        // Planters only see their own recorded trees
+        if ($user->isPlanter()) {
+            return $query->where('recorded_by_id', $user->id);
         }
 
         $poolIds = $user->agencyPoolUserIds();

@@ -35,15 +35,19 @@ class TreePolicy
 
     /**
      * A user may act on a tree only if they own it. Super Admins bypass the
-     * ownership check entirely. An admin owns every tree recorded by a managed
-     * user, plus every tree tagged with their agency. A managed field user may
-     * view trees in their admin's agency pool. Unassigned users own only
-     * trees they recorded. Must stay in sync with Tree::scopeOwnedBy.
+     * ownership check entirely. Planters own only the trees they recorded themselves.
+     * An admin owns every tree recorded by a managed user, plus every tree
+     * tagged with their agency. A monitor may view trees in their admin's
+     * agency pool. Must stay in sync with Tree::scopeOwnedBy.
      */
     private function owns(User $user, Tree $tree): bool
     {
         if ($user->isSuperAdmin()) {
             return true;
+        }
+
+        if ($user->isPlanter()) {
+            return $tree->recorded_by_id === $user->id;
         }
 
         if (in_array($tree->recorded_by_id, $user->agencyPoolUserIds(), true)) {

@@ -489,7 +489,7 @@
                     Environmental Monitoring Summary ({{ $recordCount }} Records) &bull; Official MENRO Document
                 @endif
             </div>
-            <div class="report-meta">Generated {{ $generatedAt->format('M d, Y g:i A') }}</div>
+            <div class="report-meta">Generated {{ ($generatedAt ?? now())->format('M d, Y g:i A') }}</div>
         </div>
 
         {{-- 3. Key Performance Indicators --}}
@@ -721,7 +721,7 @@
         <div class="report-title-section">
             <h1 class="report-title">PLANTING &amp; MONITORING REPORT</h1>
             <div class="report-subtitle">Environmental Impact Summary | Official MENRO Document</div>
-            <div class="report-meta">Generated {{ $generatedAt->format('M d, Y g:i A') }}</div>
+            <div class="report-meta">Generated {{ ($generatedAt ?? now())->format('M d, Y g:i A') }}</div>
         </div>
 
         {{-- 3. Key Performance Indicators --}}
@@ -855,7 +855,7 @@
                         <div style="font-size: 8px; color: #475569; letter-spacing: 0.3px; line-height: 1.2; margin-top: 1px;">Planting &amp; Monitoring Detailed Records</div>
                     </td>
                     <td style="text-align: right; vertical-align: bottom; padding: 0;">
-                        <div style="font-size: 7.5px; color: #64748b;">Generated: {{ $generatedAt->format('M d, Y') }}</div>
+                        <div style="font-size: 7.5px; color: #64748b;">Generated: {{ ($generatedAt ?? now())->format('M d, Y g:i A') }}</div>
                     </td>
                 </tr>
             </table>

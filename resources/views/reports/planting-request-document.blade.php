@@ -355,7 +355,7 @@
     <div class="meta-bar">
         Request Reference: <strong>{{ $request->request_no ?? 'REQ-' . $request->id }}</strong> &nbsp;|&nbsp;
         Date Filed: <strong>{{ optional($request->request_date)->format('F d, Y') ?? $request->created_at->format('F d, Y') }}</strong> &nbsp;|&nbsp;
-        Generated: <strong>{{ now()->format('M d, Y g:i A') }}</strong>
+        Generated: <strong>{{ ($generatedAt ?? now())->format('M d, Y g:i A') }}</strong>
     </div>
 
     {{-- ========== SECTION 1: REQUESTER & PROJECT DETAILS ========== --}}

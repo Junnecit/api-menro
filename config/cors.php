@@ -22,7 +22,8 @@ return [
     ])),
 
     'allowed_origins_patterns' => [
-        '#^https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.0\.\d+\.\d+)(:\d+)?$#',
+        '#^https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)(:\d+)?$#',
+        '#^https?://.*\.ngrok(-free)?\.(app|dev)$#',
     ],
 
     'allowed_headers' => ['*'],

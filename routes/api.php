@@ -38,6 +38,8 @@ Route::prefix('auth')->group(function () {
     Route::get('google/callback', [GoogleAuthController::class, 'callback']);
     Route::post('google/exchange', [GoogleAuthController::class, 'exchange'])
         ->middleware('throttle:google-exchange');
+    Route::post('google/token', [GoogleAuthController::class, 'token'])
+        ->middleware('throttle:google-exchange');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);

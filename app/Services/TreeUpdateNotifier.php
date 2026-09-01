@@ -26,9 +26,9 @@ class TreeUpdateNotifier
         }
 
         $species = $tree->species ?: 'Tree';
-        $status = $tree->status ?: 'updated';
+        $statusValue = $tree->status instanceof \BackedEnum ? $tree->status->value : (string) ($tree->status ?: 'updated');
         $title = 'Your tree was updated';
-        $body = sprintf('%s marked "%s" as %s.', $actor->name, $species, str_replace('_', ' ', $status));
+        $body = sprintf('%s marked "%s" as %s.', $actor->name, $species, str_replace('_', ' ', $statusValue));
 
         $notification = AppNotification::create([
             'user_id' => $recorder->id,
