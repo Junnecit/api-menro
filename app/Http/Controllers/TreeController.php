@@ -36,6 +36,7 @@ class TreeController extends Controller
             ->status($request->query('status'))
             ->agency($request->integer('agency_id') ?: null)
             ->barangay($request->query('barangay'))
+            ->orderBy('common_name')
             ->get();
 
         return response()->json([

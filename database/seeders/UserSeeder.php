@@ -36,19 +36,5 @@ class UserSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-
-        $items = [
-            ['title' => 'Sample Draft Item', 'description' => 'A draft test item for API testing.', 'status' => TestItemStatus::Draft],
-            ['title' => 'Active Test Record', 'description' => 'An active item visible in listings.', 'status' => TestItemStatus::Active],
-            ['title' => 'Archived Entry', 'description' => 'An archived item for filter testing.', 'status' => TestItemStatus::Archived],
-            ['title' => 'Quick API Test', 'description' => 'Use this for CRUD smoke tests.', 'status' => TestItemStatus::Draft],
-            ['title' => 'Dashboard Summary Item', 'description' => 'Shows up in dashboard counts.', 'status' => TestItemStatus::Active],
-        ];
-
-        TestItem::where('user_id', $superAdmin->id)->delete();
-
-        foreach ($items as $item) {
-            TestItem::create(array_merge($item, ['user_id' => $superAdmin->id]));
-        }
     }
 }

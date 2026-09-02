@@ -97,12 +97,15 @@ class AuthController extends Controller
         $defaultRole = Role::where('slug', 'admin')->first();
 
         $user = DB::transaction(function () use ($request, $defaultRole) {
-            $agencyData = PsgcLocation::applyAddress([
-                'initials' => $request->initials,
-                'name' => $request->agency_name,
-                'type' => $request->type,
-                'contact' => $request->contact,
-                'email' => $request->agency_email,
+            $initials = $request->initials ?: strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $request->name) ?: 'AGY', 0, 4));
+            $agencyName = $request->agency_name ?: ($request->name . "'s Agency");
+
+            $agencyPayload = [
+                'initials' => $initials,
+                'name' => $agencyName,
+                'type' => $request->type ?: 'Government Agency',
+                'contact' => $request->contact ?: $request->name,
+                'email' => $request->agency_email ?: $request->email,
                 'phone' => $request->phone,
                 'region_code' => $request->region_code,
                 'province_code' => $request->province_code,
@@ -114,8 +117,9 @@ class AuthController extends Controller
                 'barangay_name' => $request->barangay_name,
                 'custom_address' => $request->custom_address,
                 'status' => 'Active',
-            ]);
+            ];
 
+            $agencyData = PsgcLocation::applyAddress($agencyPayload);
             $agency = Agency::create($agencyData);
 
             $personalAddress = implode(', ', array_filter([
@@ -201,7 +205,19 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $token = $this->authService->createToken($user);
+        $platform = $request->header('X-Client-Platform', 'web');
+
+        if ($platform === 'web' && ! $user->isAdminOrAbove()) {
+            Auth::logout();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Access restricted: Mobile/Planter accounts cannot access the Web Administration Portal. Please use the MENRO mobile application.',
+                'is_mobile_account' => true,
+            ], 403);
+        }
+
+        $token = $this->authService->createToken($user, "{$platform}-auth-token");
 
         return response()->json([
             'success' => true,
@@ -266,7 +282,8 @@ class AuthController extends Controller
                 'status' => UserStatus::Active,
             ])->save();
 
-            $token = $this->authService->createToken($user);
+            $platform = $request->header('X-Client-Platform', 'web');
+            $token = $this->authService->createToken($user, "{$platform}-auth-token");
 
             return response()->json([
                 'success' => true,

@@ -34,10 +34,10 @@ class RegisterRequest extends FormRequest
             ]);
         }
 
-        // Web admin registration requires agency details in the same submit.
+        // Web admin registration only requires basic credentials; agency details are optional and can be completed on Profile.
         return array_merge($rules, [
-            'initials' => ['required', 'string', 'max:5'],
-            'agency_name' => ['required', 'string', 'max:255'],
+            'initials' => ['nullable', 'string', 'max:10'],
+            'agency_name' => ['nullable', 'string', 'max:255'],
             'type' => ['nullable', Rule::in([
                 'Government Agency',
                 'Local Government',
@@ -49,14 +49,14 @@ class RegisterRequest extends FormRequest
             'agency_email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'date_of_birth' => ['nullable', 'date', 'before:today', 'after:1900-01-01'],
-            'region_code' => ['required', 'string', 'regex:/^\d{9}$/'],
-            'province_code' => ['nullable', 'string', 'regex:/^\d{9}$/'],
-            'municipality_code' => ['required', 'string', 'regex:/^\d{9}$/'],
-            'barangay_code' => ['required', 'string', 'regex:/^\d{9}$/'],
-            'region_name' => ['required', 'string', 'max:255'],
+            'region_code' => ['nullable', 'string'],
+            'province_code' => ['nullable', 'string'],
+            'municipality_code' => ['nullable', 'string'],
+            'barangay_code' => ['nullable', 'string'],
+            'region_name' => ['nullable', 'string', 'max:255'],
             'province_name' => ['nullable', 'string', 'max:255'],
-            'municipality_name' => ['required', 'string', 'max:255'],
-            'barangay_name' => ['required', 'string', 'max:255'],
+            'municipality_name' => ['nullable', 'string', 'max:255'],
+            'barangay_name' => ['nullable', 'string', 'max:255'],
             'custom_address' => ['nullable', 'string', 'max:1000'],
         ]);
     }

@@ -17,8 +17,6 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             UserSeeder::class,
-            // AgencySeeder + RequestSeeder replaced by linked Tagoloan partner demo data.
-            TagoloanPartnerSeeder::class,
         ]);
     }
 }

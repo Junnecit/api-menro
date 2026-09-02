@@ -13,9 +13,15 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+use App\Models\ReportFolder;
+use App\Services\ReportFileService;
+
 class PlantingMonitoringController extends Controller
 {
-    public function __construct(private MonitoringReportPdfService $reportPdf) {}
+    public function __construct(
+        private MonitoringReportPdfService $reportPdf,
+        private ReportFileService $fileService,
+    ) {}
 
     public function seedlingTypes(): JsonResponse
     {
@@ -176,7 +182,31 @@ class PlantingMonitoringController extends Controller
             'date_to' => $request->input('date_to'),
         ]);
 
-        return $pdf->download('menro-planting-monitoring-report-'.now()->format('Y-m-d').'.pdf');
+        $filename = 'menro-planting-monitoring-report-'.now()->format('Y-m-d-His').'.pdf';
+        $pdfBinary = $pdf->output();
+
+        // Automatically store the generated report in the database (report_files table)
+        $agencyId = $request->user()->effectiveAgencyId();
+        $folder = null;
+        if ($agencyId) {
+            $folder = ReportFolder::query()->where('agency_id', $agencyId)->where('name', 'Area Data')->first()
+                ?? ReportFolder::query()->where('agency_id', $agencyId)->first();
+        }
+
+        $reportFile = $this->fileService->storeGeneratedPdf(
+            $folder?->id,
+            $pdfBinary,
+            $filename,
+            $request->user()->id,
+            'monitoring-pdf',
+            'export:'.now()->timestamp
+        );
+
+        return response($pdfBinary, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'X-Report-File-Id' => (string) $reportFile->id,
+        ]);
     }
 
     private function filteredQuery(Request $request, Builder $query): Builder

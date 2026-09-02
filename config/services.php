@@ -36,9 +36,22 @@ return [
     ],
 
     'google' => [
-        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_id' => env('GOOGLE_WEB_CLIENT_ID', env('GOOGLE_CLIENT_ID')),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/auth/google/callback'),
+
+        // Dedicated Web & Android Client IDs
+        'web_client_id' => env('GOOGLE_WEB_CLIENT_ID', env('GOOGLE_CLIENT_ID')),
+        'android_client_id' => env('GOOGLE_ANDROID_CLIENT_ID', env('GOOGLE_MOBILE_CLIENT_ID')),
+
+        // All authorized Google OAuth client IDs accepted by backend token verification
+        'allowed_client_ids' => array_values(array_unique(array_filter([
+            env('GOOGLE_WEB_CLIENT_ID'),
+            env('GOOGLE_CLIENT_ID'),
+            env('GOOGLE_ANDROID_CLIENT_ID'),
+            env('GOOGLE_MOBILE_CLIENT_ID'),
+            env('GOOGLE_IOS_CLIENT_ID'),
+        ]))),
 
         // New Google sign-ins are only allowed to create an account when the
         // email is in this list or falls under one of the allowed domains.

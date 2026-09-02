@@ -13,6 +13,7 @@ use App\Http\Controllers\RequestController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TestItemController;
 use App\Http\Controllers\TreeController;
+use App\Http\Controllers\TreeReportController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -74,6 +75,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('users', UserController::class);
     });
 
+    // Permission matrix and module access controls are strictly restricted to Super Admin.
+    Route::middleware('role:super-admin')->group(function () {
+        Route::put('roles/permissions/batch', [RoleController::class, 'batchUpdate']);
+        Route::post('roles/permissions/reset-all', [RoleController::class, 'resetAll']);
+        Route::put('roles/{role}/permissions', [RoleController::class, 'updatePermissions']);
+        Route::post('roles/{role}/reset-permissions', [RoleController::class, 'resetPermissions']);
+    });
+
     Route::apiResource('test-items', TestItemController::class);
 
     Route::get('locations/barangays', [RequestController::class, 'barangays']);
@@ -103,6 +112,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('dashboard/stats', [DashboardController::class, 'stats']);
     Route::apiResource('trees', TreeController::class);
 
+    // Tree Incident & Inspection Reports
+    Route::get('tree-reports/stats', [TreeReportController::class, 'stats']);
+    Route::get('tree-reports/trash', [TreeReportController::class, 'trash']);
+    Route::post('tree-reports/{id}/restore', [TreeReportController::class, 'restore']);
+    Route::delete('tree-reports/{id}/force', [TreeReportController::class, 'forceDestroy']);
+    Route::get('reports/tree-reports/pdf', [TreeReportController::class, 'exportPdf']);
+    Route::apiResource('tree-reports', TreeReportController::class);
+
     // Report Center file manager
     Route::get('report-center/browse', [ReportCenterController::class, 'browse']);
     Route::post('report-center/sync-agencies', [ReportCenterController::class, 'syncAgencyFolders']);
@@ -113,6 +130,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('report-center/folders/{id}/force', [ReportCenterController::class, 'forceDestroyFolder']);
     Route::post('report-center/files', [ReportCenterController::class, 'storeFile']);
     Route::post('report-center/files/from-monitoring-pdf', [ReportCenterController::class, 'saveMonitoringPdf']);
+    Route::post('report-center/files/from-tree-reports-pdf', [TreeReportController::class, 'saveToReportCenter']);
     Route::put('report-center/files/{report_file}', [ReportCenterController::class, 'updateFile']);
     Route::delete('report-center/files/{report_file}', [ReportCenterController::class, 'destroyFile']);
     Route::post('report-center/files/{id}/restore', [ReportCenterController::class, 'restoreFile']);

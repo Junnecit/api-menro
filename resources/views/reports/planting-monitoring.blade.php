@@ -5,7 +5,7 @@
     <title>MENRO Planting &amp; Monitoring Report</title>
     <style>
         @page {
-            margin: 18px 26px 30px 26px;
+            margin: 20px 28px 32px 28px;
             size: legal portrait;
         }
         * {
@@ -13,9 +13,9 @@
         }
         body {
             font-family: "Helvetica", "Arial", sans-serif;
-            font-size: 8px;
+            font-size: 9px;
             color: #1e293b;
-            line-height: 1.3;
+            line-height: 1.45;
             background-color: #ffffff;
             margin: 0;
             padding: 0;
@@ -27,16 +27,16 @@
             bottom: -20px;
             left: 0;
             right: 0;
-            height: 16px;
+            height: 18px;
             border-top: 1px solid #cbd5e1;
-            padding-top: 3px;
+            padding-top: 4px;
         }
         .footer-table {
             width: 100%;
             border-collapse: collapse;
         }
         .footer-table td {
-            font-size: 7.5px;
+            font-size: 8px;
             color: #64748b;
             vertical-align: middle;
             padding: 0;
@@ -52,141 +52,141 @@
         /* --- OFFICIAL HEADER --- */
         .header-container {
             width: 100%;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             border-bottom: 2px solid #059669;
-            padding-bottom: 4px;
+            padding-bottom: 6px;
             text-align: center;
         }
         .header-img {
-            width: 78%;
-            max-width: 500px;
+            width: 80%;
+            max-width: 520px;
             height: auto;
             display: block;
             margin: 0 auto;
             padding: 0;
         }
         .header-table {
-            width: 80%;
-            margin: 0 auto 2px auto;
+            width: 82%;
+            margin: 0 auto 3px auto;
             border-collapse: collapse;
         }
         .header-table td {
             vertical-align: middle;
         }
         .seal-td {
-            width: 48px;
+            width: 50px;
             text-align: center;
         }
         .seal-img {
-            width: 42px;
-            height: 42px;
+            width: 44px;
+            height: 44px;
         }
         .agency-td {
             text-align: center;
-            padding: 0 8px;
+            padding: 0 10px;
         }
         .agency-office-top {
+            font-size: 11.5px;
+            font-weight: bold;
+            color: #0f172a;
+            letter-spacing: 0.3px;
+            line-height: 1.2;
+        }
+        .agency-republic {
+            font-size: 8px;
+            color: #475569;
+            line-height: 1.2;
+            margin-top: 1px;
+        }
+        .agency-province {
+            font-size: 9px;
+            color: #0f172a;
+            font-weight: bold;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            line-height: 1.2;
+            margin-top: 1px;
+        }
+        .agency-municipality {
             font-size: 10.5px;
             font-weight: bold;
             color: #0f172a;
             letter-spacing: 0.3px;
-            line-height: 1.15;
-        }
-        .agency-republic {
-            font-size: 7.5px;
-            color: #475569;
-            line-height: 1.15;
-            margin-top: 1px;
-        }
-        .agency-province {
-            font-size: 8.5px;
-            color: #0f172a;
-            font-weight: bold;
-            letter-spacing: 0.3px;
             text-transform: uppercase;
-            line-height: 1.15;
-            margin-top: 1px;
-        }
-        .agency-municipality {
-            font-size: 9.5px;
-            font-weight: bold;
-            color: #0f172a;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-            line-height: 1.15;
+            line-height: 1.2;
             margin-top: 1px;
         }
 
         /* --- DOCUMENT TITLE & SUBTITLE (CLEAN CENTERED) --- */
         .report-title-section {
             text-align: center;
-            margin-top: 4px;
-            margin-bottom: 6px;
+            margin-top: 6px;
+            margin-bottom: 10px;
         }
         .report-title {
-            font-size: 11px;
+            font-size: 13px;
             font-weight: bold;
             color: #065f46;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
-            margin: 0 0 1px 0;
+            letter-spacing: 0.8px;
+            margin: 0 0 2px 0;
         }
         .report-subtitle {
-            font-size: 7.5px;
+            font-size: 8.5px;
             color: #475569;
-            margin: 0 0 1px 0;
+            margin: 0 0 2px 0;
         }
         .report-meta {
-            font-size: 7px;
+            font-size: 8px;
             color: #64748b;
             margin: 0;
         }
 
         /* --- SECTION TITLES WITH FULL-WIDTH GREEN DIVIDER --- */
         .section-title {
-            font-size: 8px;
+            font-size: 9px;
             font-weight: bold;
             color: #065f46;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
-            margin-top: 7px;
-            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+            margin-top: 11px;
+            margin-bottom: 6px;
             border-bottom: 1.5px solid #059669;
-            padding-bottom: 2px;
+            padding-bottom: 3px;
         }
 
         /* --- 1. KEY PERFORMANCE INDICATORS (6 CARDS IN A ROW) --- */
         .kpi-grid {
             width: 100%;
             border-collapse: separate;
-            border-spacing: 4px 0;
+            border-spacing: 5px 0;
             table-layout: fixed;
-            margin-bottom: 6px;
+            margin-bottom: 9px;
         }
         .kpi-grid td {
             width: 16.66%;
             background-color: #f0fdf4;
             border: 1px solid #a7f3d0;
-            border-radius: 3px;
-            padding: 5px 2px;
+            border-radius: 4px;
+            padding: 6px 3px;
             text-align: center;
             vertical-align: middle;
         }
         .kpi-val {
             display: block;
-            font-size: 11.5px;
+            font-size: 13px;
             font-weight: bold;
             color: #064e3b;
-            line-height: 1.1;
+            line-height: 1.15;
         }
         .kpi-lbl {
             display: block;
-            font-size: 6px;
+            font-size: 7px;
             color: #475569;
             text-transform: uppercase;
-            letter-spacing: 0.25px;
+            letter-spacing: 0.3px;
             font-weight: bold;
-            margin-top: 2px;
+            margin-top: 2.5px;
         }
 
         /* --- 2. SURVIVAL RATE & MONITORING PERFORMANCE PANEL --- */
@@ -194,55 +194,56 @@
             width: 100%;
             background-color: #f0fdf4;
             border: 1px solid #a7f3d0;
-            border-radius: 3px;
+            border-radius: 4px;
             border-collapse: collapse;
-            margin-bottom: 6px;
+            margin-bottom: 9px;
         }
         .performance-panel td {
             vertical-align: middle;
-            padding: 7px 10px;
+            padding: 8px 12px;
         }
         .perf-left {
             width: 32%;
             text-align: center;
             border-right: 1px solid #a7f3d0;
+            padding: 8px 10px !important;
         }
         .perf-mid {
             width: 34%;
-            padding-left: 12px !important;
+            padding-left: 14px !important;
             border-right: 1px solid #e2e8f0;
         }
         .perf-right {
             width: 34%;
-            padding-left: 12px !important;
+            padding-left: 14px !important;
         }
         .perf-stat-group {
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
         .perf-stat-group:last-child {
             margin-bottom: 0;
         }
         .perf-stat-lbl {
-            font-size: 7px;
+            font-size: 7.5px;
             color: #64748b;
             display: block;
         }
         .perf-stat-val {
-            font-size: 9.5px;
+            font-size: 10px;
             font-weight: bold;
             color: #0f172a;
             display: block;
-            margin-top: 0.5px;
+            margin-top: 1px;
         }
         .perf-overall-lbl {
-            font-size: 7px;
+            font-size: 7.5px;
             color: #059669;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.5px;
         }
         .perf-overall-val {
-            font-size: 19px;
+            font-size: 21px;
             font-weight: bold;
             color: #064e3b;
             margin: 2px 0 3px 0;
@@ -252,17 +253,17 @@
             display: inline-block;
             background-color: #059669;
             color: #ffffff;
-            font-size: 7px;
+            font-size: 7.5px;
             font-weight: bold;
             text-transform: uppercase;
-            padding: 1.5px 8px;
+            padding: 2px 9px;
             border-radius: 8px;
             letter-spacing: 0.3px;
         }
         .survival-pill.attention { background-color: #d97706; }
         .survival-pill.critical { background-color: #dc2626; }
         .perf-overall-hint {
-            font-size: 5.5px;
+            font-size: 6px;
             color: #047857;
             margin-top: 3px;
             opacity: 0.85;
@@ -270,26 +271,26 @@
 
         /* --- 3. KEY FINDINGS LIST --- */
         .findings-list {
-            margin: 2px 0 6px 0;
-            padding-left: 14px;
+            margin: 4px 0 9px 0;
+            padding-left: 16px;
         }
         .findings-list li {
-            font-size: 7.5px;
+            font-size: 8.5px;
             color: #1e293b;
-            line-height: 1.3;
-            margin-bottom: 2px;
+            line-height: 1.4;
+            margin-bottom: 3px;
         }
 
         /* --- 4. GEOGRAPHIC / AREA SUMMARY TABLE --- */
         .area-summary-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 6px;
-            font-size: 7.5px;
+            margin-bottom: 9px;
+            font-size: 8.5px;
         }
         .area-summary-table th, .area-summary-table td {
             border: 1px solid #a7f3d0;
-            padding: 3.5px 5px;
+            padding: 4.5px 6px;
             vertical-align: middle;
             text-align: center;
         }
@@ -297,12 +298,12 @@
             background-color: #f0fdf4;
             color: #065f46;
             font-weight: bold;
-            font-size: 7px;
-            letter-spacing: 0.3px;
+            font-size: 8px;
+            letter-spacing: 0.35px;
         }
         .area-summary-table th.left, .area-summary-table td.left {
             text-align: left;
-            padding-left: 6px;
+            padding-left: 7px;
         }
         .area-summary-table td {
             border: 1px solid #e2e8f0;
@@ -313,8 +314,8 @@
         table.data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 6px;
-            font-size: 7.5px;
+            margin-bottom: 9px;
+            font-size: 8.5px;
         }
         table.data-table thead {
             display: table-header-group;
@@ -323,22 +324,22 @@
             page-break-inside: avoid;
         }
         table.data-table th, table.data-table td {
-            padding: 3.5px 4px;
+            padding: 5px 5px;
             border: 1px solid #cbd5e1;
             vertical-align: middle;
             text-align: center;
         }
         table.data-table th.left, table.data-table td.left {
             text-align: left;
-            padding-left: 5px;
+            padding-left: 6px;
         }
         table.data-table thead th {
             background-color: #f1f5f9;
             color: #334155;
             text-transform: uppercase;
-            font-size: 7px;
+            font-size: 7.5px;
             font-weight: bold;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.35px;
         }
         table.data-table tbody tr:nth-child(even) {
             background-color: #f8fafc;
@@ -357,23 +358,23 @@
         .notes-box {
             background-color: #f8fafc;
             border: 1px solid #cbd5e1;
-            border-radius: 3px;
-            padding: 5px 7px;
-            margin-top: 5px;
-            margin-bottom: 6px;
+            border-radius: 4px;
+            padding: 7px 9px;
+            margin-top: 8px;
+            margin-bottom: 9px;
             page-break-inside: avoid;
         }
         .notes-box .lbl {
-            font-size: 7.5px;
+            font-size: 8px;
             font-weight: bold;
             color: #064e3b;
             text-transform: uppercase;
-            margin-bottom: 2px;
-            letter-spacing: 0.3px;
+            margin-bottom: 3px;
+            letter-spacing: 0.35px;
         }
         .notes-line {
             border-bottom: 1px dotted #94a3b8;
-            height: 10px;
+            height: 12px;
             margin-bottom: 2px;
         }
 
@@ -381,9 +382,9 @@
         .signatures {
             width: 100%;
             border-collapse: separate;
-            border-spacing: 10px 0;
+            border-spacing: 14px 0;
             table-layout: fixed;
-            margin-top: 6px;
+            margin-top: 12px;
             page-break-inside: avoid;
         }
         .signatures td {
@@ -396,20 +397,20 @@
             position: relative;
         }
         .sig-role {
-            font-size: 7px;
+            font-size: 8px;
             color: #064e3b;
             font-weight: bold;
             text-transform: uppercase;
             text-align: left;
-            margin-bottom: 18px;
-            letter-spacing: 0.3px;
+            margin-bottom: 32px;
+            letter-spacing: 0.35px;
         }
         .sig-line {
             border-top: 1px solid #334155;
-            padding-top: 2.5px;
+            padding-top: 3.5px;
         }
         .sig-name {
-            font-size: 7px;
+            font-size: 7.5px;
             color: #475569;
             text-transform: uppercase;
         }

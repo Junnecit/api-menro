@@ -14,10 +14,11 @@ class WipeAllData extends Command
     protected $signature = 'db:wipe-all
         {--force : Run without confirmation}';
 
-    protected $description = 'Hard-delete all operational and user data (keep roles), then re-seed demo users';
+    protected $description = 'Hard-delete all operational and non-superadmin user data (keep roles & superadmin)';
 
     /** @var list<string> */
     private const OPS_TABLES = [
+        'tree_reports',
         'tree_photos',
         'trees',
         'planting_monitorings',
@@ -26,6 +27,8 @@ class WipeAllData extends Command
         'requests',
         'agencies',
         'test_items',
+        'app_notifications',
+        'user_push_tokens',
     ];
 
     /** @var list<string> */
@@ -46,7 +49,7 @@ class WipeAllData extends Command
 
     public function handle(): int
     {
-        if (! $this->option('force') && ! $this->confirm('This will DELETE all agencies, requests, trees, reports, and users. Continue?')) {
+        if (! $this->option('force') && ! $this->confirm('This will DELETE all agencies, requests, trees, reports, and non-superadmin users. Continue?')) {
             $this->warn('Aborted.');
 
             return self::FAILURE;
@@ -62,10 +65,38 @@ class WipeAllData extends Command
                 DB::table('users')->update(['admin_id' => null]);
             }
 
-            foreach ([...self::OPS_TABLES, ...self::AUTH_TABLES] as $table) {
+            foreach (self::OPS_TABLES as $table) {
                 if (Schema::hasTable($table)) {
                     DB::table($table)->delete();
                 }
+            }
+
+            // Find Super Admin user IDs to retain
+            $superAdminRole = DB::table('roles')->where('slug', 'super-admin')->first();
+            $superAdminIds = $superAdminRole
+                ? DB::table('users')->where('role_id', $superAdminRole->id)->pluck('id')->all()
+                : [];
+
+            if (Schema::hasTable('personal_access_tokens')) {
+                DB::table('personal_access_tokens')
+                    ->when(! empty($superAdminIds), fn ($q) => $q->whereNotIn('tokenable_id', $superAdminIds))
+                    ->delete();
+            }
+
+            if (Schema::hasTable('password_reset_tokens')) {
+                DB::table('password_reset_tokens')->delete();
+            }
+
+            if (Schema::hasTable('sessions')) {
+                DB::table('sessions')
+                    ->when(! empty($superAdminIds), fn ($q) => $q->whereNotIn('user_id', $superAdminIds))
+                    ->delete();
+            }
+
+            if (Schema::hasTable('users')) {
+                DB::table('users')
+                    ->when(! empty($superAdminIds), fn ($q) => $q->whereNotIn('id', $superAdminIds))
+                    ->delete();
             }
         });
 
@@ -99,10 +130,8 @@ class WipeAllData extends Command
         );
 
         $this->newLine();
-        $this->info('Demo login (password: password):');
-        $this->line('  - superadmin@example.com');
-        $this->line('  - admin.<slug>@tagoloan.demo  (after TagoloanPartnerSeeder)');
-        $this->line('  - planter1.<slug>@tagoloan.demo … planter10.<slug>@tagoloan.demo');
+        $this->info('Super Admin account retained:');
+        $this->line('  - Email: superadmin@example.com');
 
         return self::SUCCESS;
     }

@@ -25,10 +25,14 @@ class TreeUpdateNotifier
             return;
         }
 
-        $species = $tree->species ?: 'Tree';
+        $species = $tree->species ?: $tree->common_name ?: 'Tree';
+        $code = $tree->tree_code ?: ('#' . $tree->id);
         $statusValue = $tree->status instanceof \BackedEnum ? $tree->status->value : (string) ($tree->status ?: 'updated');
-        $title = 'Your tree was updated';
-        $body = sprintf('%s marked "%s" as %s.', $actor->name, $species, str_replace('_', ' ', $statusValue));
+        $statusLabel = ucwords(str_replace('_', ' ', $statusValue));
+        $location = $tree->barangay ? " at {$tree->barangay}" : '';
+
+        $title = "Tree {$code} Updated";
+        $body = sprintf('%s updated your planted %s (%s)%s to "%s".', $actor->name, $species, $code, $location, $statusLabel);
 
         $notification = AppNotification::create([
             'user_id' => $recorder->id,
@@ -37,7 +41,9 @@ class TreeUpdateNotifier
             'body' => $body,
             'data' => [
                 'tree_id' => $tree->id,
-                'status' => $tree->status,
+                'tree_code' => $tree->tree_code,
+                'species' => $tree->species ?: $tree->common_name,
+                'status' => $statusValue,
                 'updated_by_id' => $actor->id,
             ],
         ]);

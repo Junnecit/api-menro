@@ -10,11 +10,34 @@ class Role extends Model
     protected $fillable = [
         'name',
         'slug',
+        'permissions',
+    ];
+
+    protected $casts = [
+        'permissions' => 'array',
     ];
 
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    public static function defaultPermissionsFor(string $slug): array
+    {
+        return match ($slug) {
+            'super-admin' => ['overview', 'requests', 'map', 'agencies', 'reports', 'settings', 'users', 'permissions'],
+            'admin' => ['overview', 'requests', 'map', 'settings', 'users', 'permissions'],
+            'user', 'other' => ['overview', 'requests', 'map', 'agencies', 'reports', 'settings'],
+            'monitor' => ['overview', 'requests', 'map', 'agencies', 'reports', 'settings'],
+            default => ['overview', 'requests', 'map', 'settings'],
+        };
+    }
+
+    public function getEffectivePermissions(): array
+    {
+        return is_array($this->permissions) && count($this->permissions) > 0
+            ? array_values(array_unique($this->permissions))
+            : static::defaultPermissionsFor($this->slug);
     }
 
     public function isSuperAdmin(): bool
