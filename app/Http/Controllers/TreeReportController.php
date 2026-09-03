@@ -5,12 +5,10 @@ namespace App\Http\Controllers;
 use App\Enums\ReportStatus;
 use App\Http\Requests\TreeReport\StoreTreeReportRequest;
 use App\Http\Requests\TreeReport\UpdateTreeReportRequest;
-use App\Http\Resources\ReportFileResource;
 use App\Http\Resources\TreeReportResource;
 use App\Models\Agency;
 use App\Models\Tree;
 use App\Models\TreeReport;
-use App\Services\ReportFileService;
 use App\Services\TreeReportNotifier;
 use App\Services\TreeReportPdfService;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,7 +25,6 @@ class TreeReportController extends Controller
     public function __construct(
         private TreeReportNotifier $notifier,
         private TreeReportPdfService $pdfService,
-        private ReportFileService $fileService,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -303,70 +300,38 @@ class TreeReportController extends Controller
         $filename = 'menro-tree-reports-summary-'.now()->format('Y-m-d-His').'.pdf';
         $pdfBinary = $pdf->output();
 
-        // Automatically store the generated report in the database (report_files table)
-        $agencyId = $request->user()->effectiveAgencyId();
-        $folder = null;
-        if ($agencyId) {
-            $folder = \App\Models\ReportFolder::query()->where('agency_id', $agencyId)->where('name', 'Area Data')->first()
-                ?? \App\Models\ReportFolder::query()->where('agency_id', $agencyId)->first();
-        }
+        try {
+            $filePath = 'generated-reports/' . $filename;
+            \App\Support\PrivateStorage::put($filePath, $pdfBinary);
 
-        $reportFile = $this->fileService->storeGeneratedPdf(
-            $folder?->id,
-            $pdfBinary,
-            $filename,
-            $request->user()->id,
-            'tree-reports-pdf',
-            'export:'.now()->timestamp
-        );
+            \App\Models\GeneratedReport::create([
+                'user_id' => $request->user()?->id,
+                'agency_id' => $request->user()?->effectiveAgencyId(),
+                'report_type' => 'tree_reports',
+                'title' => 'Tree Incident & Damage Reports Summary',
+                'filename' => $filename,
+                'file_path' => $filePath,
+                'file_size' => strlen($pdfBinary),
+                'record_count' => $query->count(),
+                'filters' => array_filter([
+                    'status' => $request->query('status'),
+                    'severity' => $request->query('severity'),
+                    'report_type' => $request->query('report_type'),
+                    'barangay' => $request->query('barangay'),
+                    'date_from' => $request->query('date_from'),
+                    'date_to' => $request->query('date_to'),
+                    'search' => $request->query('search'),
+                ]),
+                'generated_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to log generated report: ' . $e->getMessage());
+        }
 
         return response($pdfBinary, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-            'X-Report-File-Id' => (string) $reportFile->id,
         ]);
-    }
-
-    /**
-     * Save generated Bulk PDF to Report Center
-     */
-    public function saveToReportCenter(Request $request): JsonResponse
-    {
-        $this->authorize('viewAny', TreeReport::class);
-
-        $request->validate([
-            'folder_id' => ['nullable', 'integer', 'exists:report_folders,id'],
-            'name' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        $query = $this->buildFilterQuery($request);
-
-        $pdfBinary = $this->pdfService->output($query, [
-            'status' => $request->query('status'),
-            'severity' => $request->query('severity'),
-            'report_type' => $request->query('report_type'),
-            'barangay' => $request->query('barangay'),
-            'date_from' => $request->query('date_from'),
-            'date_to' => $request->query('date_to'),
-            'search' => $request->query('search'),
-        ]);
-
-        $name = $request->input('name')
-            ?: 'menro-tree-incident-report-'.now()->format('Y-m-d').'.pdf';
-
-        $file = $this->fileService->storeGeneratedPdf(
-            $request->integer('folder_id') ?: null,
-            $pdfBinary,
-            $name,
-            $request->user()->id,
-            'tree-reports-pdf'
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Tree reports summary saved to the Report Center.',
-            'data' => new ReportFileResource($file),
-        ], 201);
     }
 
     private function buildFilterQuery(Request $request): Builder

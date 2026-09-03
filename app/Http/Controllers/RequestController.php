@@ -81,7 +81,39 @@ class RequestController extends Controller
             'date_to' => $request->input('date_to'),
         ]);
 
-        return $pdf->download('MENRO-Planting-Requests-Summary-'.now()->format('Y-m-d').'.pdf');
+        $filename = 'MENRO-Planting-Requests-Summary-'.now()->format('Y-m-d').'.pdf';
+        $pdfBinary = $pdf->output();
+
+        try {
+            $filePath = 'generated-reports/' . $filename;
+            \App\Support\PrivateStorage::put($filePath, $pdfBinary);
+
+            \App\Models\GeneratedReport::create([
+                'user_id' => $request->user()?->id,
+                'agency_id' => $request->user()?->effectiveAgencyId(),
+                'report_type' => 'planting_requests',
+                'title' => 'Planting Requests & Projects Summary',
+                'filename' => $filename,
+                'file_path' => $filePath,
+                'file_size' => strlen($pdfBinary),
+                'record_count' => $query->count(),
+                'filters' => array_filter([
+                    'search' => $request->input('search'),
+                    'status' => $request->input('status'),
+                    'agency_id' => $request->input('agency_id'),
+                    'date_from' => $request->input('date_from'),
+                    'date_to' => $request->input('date_to'),
+                ]),
+                'generated_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to log generated report: ' . $e->getMessage());
+        }
+
+        return response($pdfBinary, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
     }
 
     public function analyzeDocument(AnalyzePlantingRequestDocumentRequest $request): JsonResponse

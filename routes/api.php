@@ -4,14 +4,13 @@ use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AppNotificationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GeneratedReportController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PlantingMonitoringController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ReportCenterController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\RoleController;
-use App\Http\Controllers\TestItemController;
 use App\Http\Controllers\TreeController;
 use App\Http\Controllers\TreeReportController;
 use App\Http\Controllers\UserController;
@@ -83,8 +82,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('roles/{role}/reset-permissions', [RoleController::class, 'resetPermissions']);
     });
 
-    Route::apiResource('test-items', TestItemController::class);
-
     Route::get('locations/barangays', [RequestController::class, 'barangays']);
     Route::get('agencies/options', [AgencyController::class, 'options']);
     Route::get('agencies/trash', [AgencyController::class, 'trash']);
@@ -120,20 +117,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('reports/tree-reports/pdf', [TreeReportController::class, 'exportPdf']);
     Route::apiResource('tree-reports', TreeReportController::class);
 
-    // Report Center file manager
-    Route::get('report-center/browse', [ReportCenterController::class, 'browse']);
-    Route::post('report-center/sync-agencies', [ReportCenterController::class, 'syncAgencyFolders']);
-    Route::post('report-center/folders', [ReportCenterController::class, 'storeFolder']);
-    Route::put('report-center/folders/{report_folder}', [ReportCenterController::class, 'updateFolder']);
-    Route::delete('report-center/folders/{report_folder}', [ReportCenterController::class, 'destroyFolder']);
-    Route::post('report-center/folders/{id}/restore', [ReportCenterController::class, 'restoreFolder']);
-    Route::delete('report-center/folders/{id}/force', [ReportCenterController::class, 'forceDestroyFolder']);
-    Route::post('report-center/files', [ReportCenterController::class, 'storeFile']);
-    Route::post('report-center/files/from-monitoring-pdf', [ReportCenterController::class, 'saveMonitoringPdf']);
-    Route::post('report-center/files/from-tree-reports-pdf', [TreeReportController::class, 'saveToReportCenter']);
-    Route::put('report-center/files/{report_file}', [ReportCenterController::class, 'updateFile']);
-    Route::delete('report-center/files/{report_file}', [ReportCenterController::class, 'destroyFile']);
-    Route::post('report-center/files/{id}/restore', [ReportCenterController::class, 'restoreFile']);
-    Route::delete('report-center/files/{id}/force', [ReportCenterController::class, 'forceDestroyFile']);
-    Route::get('report-center/files/{report_file}/download', [ReportCenterController::class, 'downloadFile']);
+    // Report Generation & Export History
+    Route::get('reports/history', [GeneratedReportController::class, 'index']);
+    Route::get('reports/history/{id}/download', [GeneratedReportController::class, 'download']);
+    Route::delete('reports/history/{id}', [GeneratedReportController::class, 'destroy']);
 });

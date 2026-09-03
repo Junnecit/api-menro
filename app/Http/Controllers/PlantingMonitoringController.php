@@ -13,14 +13,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-use App\Models\ReportFolder;
-use App\Services\ReportFileService;
-
 class PlantingMonitoringController extends Controller
 {
     public function __construct(
         private MonitoringReportPdfService $reportPdf,
-        private ReportFileService $fileService,
     ) {}
 
     public function seedlingTypes(): JsonResponse
@@ -185,27 +181,40 @@ class PlantingMonitoringController extends Controller
         $filename = 'menro-planting-monitoring-report-'.now()->format('Y-m-d-His').'.pdf';
         $pdfBinary = $pdf->output();
 
-        // Automatically store the generated report in the database (report_files table)
-        $agencyId = $request->user()->effectiveAgencyId();
-        $folder = null;
-        if ($agencyId) {
-            $folder = ReportFolder::query()->where('agency_id', $agencyId)->where('name', 'Area Data')->first()
-                ?? ReportFolder::query()->where('agency_id', $agencyId)->first();
-        }
+        // Save report history audit log and file
+        try {
+            $filePath = 'generated-reports/' . $filename;
+            \App\Support\PrivateStorage::put($filePath, $pdfBinary);
 
-        $reportFile = $this->fileService->storeGeneratedPdf(
-            $folder?->id,
-            $pdfBinary,
-            $filename,
-            $request->user()->id,
-            'monitoring-pdf',
-            'export:'.now()->timestamp
-        );
+            $seedling = $request->input('seedling_type');
+            $title = $seedling
+                ? "Planting Monitoring Audit ({$seedling})"
+                : "Planting Monitoring Summary Report";
+
+            \App\Models\GeneratedReport::create([
+                'user_id' => $request->user()?->id,
+                'agency_id' => $request->user()?->effectiveAgencyId(),
+                'report_type' => 'planting_monitoring',
+                'title' => $title,
+                'filename' => $filename,
+                'file_path' => $filePath,
+                'file_size' => strlen($pdfBinary),
+                'record_count' => $query->count(),
+                'filters' => array_filter([
+                    'search' => $request->input('search'),
+                    'seedling_type' => $request->input('seedling_type'),
+                    'date_from' => $request->input('date_from'),
+                    'date_to' => $request->input('date_to'),
+                ]),
+                'generated_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to log generated report: ' . $e->getMessage());
+        }
 
         return response($pdfBinary, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-            'X-Report-File-Id' => (string) $reportFile->id,
         ]);
     }
 

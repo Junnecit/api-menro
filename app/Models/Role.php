@@ -26,7 +26,7 @@ class Role extends Model
     {
         return match ($slug) {
             'super-admin' => ['overview', 'requests', 'map', 'agencies', 'reports', 'settings', 'users', 'permissions'],
-            'admin' => ['overview', 'requests', 'map', 'settings', 'users', 'permissions'],
+            'admin' => ['overview', 'requests', 'map', 'agencies', 'reports', 'settings', 'users', 'permissions'],
             'user', 'other' => ['overview', 'requests', 'map', 'agencies', 'reports', 'settings'],
             'monitor' => ['overview', 'requests', 'map', 'agencies', 'reports', 'settings'],
             default => ['overview', 'requests', 'map', 'settings'],
@@ -35,7 +35,7 @@ class Role extends Model
 
     public function getEffectivePermissions(): array
     {
-        return is_array($this->permissions) && count($this->permissions) > 0
+        return is_array($this->permissions)
             ? array_values(array_unique($this->permissions))
             : static::defaultPermissionsFor($this->slug);
     }

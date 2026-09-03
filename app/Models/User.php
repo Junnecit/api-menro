@@ -59,10 +59,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Role::class);
     }
 
-    public function testItems(): HasMany
-    {
-        return $this->hasMany(TestItem::class);
-    }
 
     /**
      * The admin who manages this user.

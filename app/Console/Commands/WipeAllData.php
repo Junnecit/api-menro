@@ -22,11 +22,8 @@ class WipeAllData extends Command
         'tree_photos',
         'trees',
         'planting_monitorings',
-        'report_files',
-        'report_folders',
         'requests',
         'agencies',
-        'test_items',
         'app_notifications',
         'user_push_tokens',
     ];
@@ -43,7 +40,6 @@ class WipeAllData extends Command
     private const STORAGE_DIRS = [
         'planting-request-docs',
         'tree-photos',
-        'report-files',
         'profile-photos',
     ];
 

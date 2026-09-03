@@ -212,12 +212,6 @@ class UserController extends Controller
         $user = User::onlyTrashed()->findOrFail($id);
         $this->authorize('forceDelete', $user);
 
-        if ($user->testItems()->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot permanently delete a user with linked test items.',
-            ], 422);
-        }
 
         $user->tokens()->delete();
         $user->forceDelete();
