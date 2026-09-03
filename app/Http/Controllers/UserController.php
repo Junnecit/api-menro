@@ -63,12 +63,11 @@ class UserController extends Controller
             ], 403);
         }
 
-        // Only a Super Admin manages the Admins pool; a plain admin manages
-        // only their own users.
+        // Only a Super Admin can assign or promote to the Admin role.
         if ($role->slug === 'admin' && ! $request->user()->isSuperAdmin()) {
             return response()->json([
                 'success' => false,
-                'message' => 'You cannot assign the Admin role.',
+                'message' => 'Admin accounts must be a Super Admin promotion only.',
             ], 403);
         }
 
@@ -123,12 +122,11 @@ class UserController extends Controller
                 ], 403);
             }
 
-            // Only a Super Admin manages the Admins pool; a plain admin
-            // manages only their own users.
+            // Admin accounts must be a Super Admin promotion only.
             if ($role->slug === 'admin' && ! $request->user()->isSuperAdmin()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You cannot assign the Admin role.',
+                    'message' => 'Admin accounts must be a Super Admin promotion only.',
                 ], 403);
             }
         }
@@ -146,6 +144,8 @@ class UserController extends Controller
         $targetRoleSlug = $targetRole?->slug;
         if ($targetRole && ! $targetRole->needsManagingAdmin() && array_key_exists('admin_id', $data)) {
             $data['admin_id'] = null;
+        } elseif ($targetRole && $targetRole->needsManagingAdmin() && $request->user()->isAdmin()) {
+            $data['admin_id'] = $request->user()->id;
         }
 
         // An agency link only makes sense for admin accounts.
@@ -155,13 +155,43 @@ class UserController extends Controller
 
         $wasPending = $user->status === UserStatus::Pending;
         $roleChanged = $request->filled('role_id') && (int) $request->role_id !== (int) $user->role_id;
+        $oldRole = $user->role;
+        $oldRoleName = $oldRole?->name ?? 'User';
         $passwordChanged = ! empty($data['password']);
-        $statusChanged = array_key_exists('status', $data) && $data['status'] !== $user->status;
+        $currentStatus = $user->status instanceof UserStatus ? $user->status->value : (string) $user->status;
+        $newStatus = array_key_exists('status', $data)
+            ? ($data['status'] instanceof UserStatus ? $data['status']->value : (string) $data['status'])
+            : $currentStatus;
+        $statusChanged = $newStatus !== $currentStatus;
+        $isDeactivating = $statusChanged && in_array($newStatus, ['inactive', 'suspended'], true);
+
+        if ($roleChanged) {
+            $data['relogin_required'] = true;
+            $data['relogin_reason'] = 'role_updated';
+        } elseif ($isDeactivating) {
+            $data['relogin_required'] = true;
+            $data['relogin_reason'] = 'account_disabled';
+        } elseif ($passwordChanged) {
+            $data['relogin_required'] = true;
+            $data['relogin_reason'] = 'password_changed';
+        }
 
         $user->update($data);
 
-        if ($roleChanged || $passwordChanged || ($statusChanged && $user->status !== UserStatus::Active)) {
-            $user->tokens()->delete();
+        if ($roleChanged && $targetRole) {
+            app(\App\Services\UserRoleNotifier::class)->notifyRoleChanged(
+                $user,
+                $targetRole,
+                $oldRoleName,
+                $request->user()
+            );
+        }
+
+        if ($isDeactivating) {
+            app(\App\Services\UserRoleNotifier::class)->notifyAccountDisabled(
+                $user,
+                $request->user()
+            );
         }
 
         if ($wasPending && $user->status === UserStatus::Active) {
@@ -170,7 +200,16 @@ class UserController extends Controller
             if ($user->email_verified_at === null) {
                 $user->forceFill(['email_verified_at' => now()])->save();
             }
-            $user->notify(new UserApproved);
+            dispatch(function () use ($user) {
+                try {
+                    $user->notify(new UserApproved);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('UserApproved email dispatch failed', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            })->afterResponse();
         }
 
         return response()->json([

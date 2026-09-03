@@ -41,7 +41,7 @@ Route::prefix('auth')->group(function () {
     Route::post('google/token', [GoogleAuthController::class, 'token'])
         ->middleware('throttle:google-exchange');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'account.status'])->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('me', [AuthController::class, 'me']);
         Route::post('change-password', [AuthController::class, 'changePassword']);
@@ -49,7 +49,7 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'account.status'])->group(function () {
     Route::get('profile', [ProfileController::class, 'show']);
     Route::match(['put', 'patch'], 'profile/update', [ProfileController::class, 'update']);
     Route::post('profile/photo', [ProfileController::class, 'uploadPhoto']);

@@ -48,7 +48,7 @@ class UserManagementTest extends TestCase
 
         return User::create([
             'role_id' => $role->id,
-            'name' => 'Test User',
+            'name' => fake()->unique()->name(),
             'email' => fake()->unique()->safeEmail(),
             'password' => Hash::make('password'),
             'status' => 'active',

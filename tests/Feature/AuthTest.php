@@ -82,10 +82,11 @@ class AuthTest extends TestCase
             'status' => 'active',
         ]);
 
-        $response = $this->postJson('/api/auth/login', [
-            'email' => 'login@example.com',
-            'password' => 'password',
-        ]);
+        $response = $this->withHeader('X-Client-Platform', 'mobile')
+            ->postJson('/api/auth/login', [
+                'email' => 'login@example.com',
+                'password' => 'password',
+            ]);
 
         $response->assertOk()
             ->assertJsonStructure(['success', 'data' => ['user', 'token']]);
@@ -132,8 +133,11 @@ class AuthTest extends TestCase
             'email' => 'field@example.com',
             'admin_id' => $admin->id,
             'phone' => '+639171234567',
-            'date_of_birth' => '2000-06-15',
         ]);
+
+        $fieldUser = User::where('email', 'field@example.com')->first();
+        $this->assertNotNull($fieldUser);
+        $this->assertSame('2000-06-15', $fieldUser->date_of_birth?->format('Y-m-d'));
     }
 
     public function test_admin_verifying_registration_otp_activates_account_and_returns_token(): void

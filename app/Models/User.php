@@ -35,6 +35,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at',
         'expo_push_token',
         'push_enabled',
+        'relogin_required',
+        'relogin_reason',
     ];
 
     protected $hidden = [
@@ -51,6 +53,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'status' => UserStatus::class,
             'push_enabled' => 'boolean',
+            'relogin_required' => 'boolean',
         ];
     }
 
@@ -92,7 +95,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function visibleUserIds(): array
     {
-        if ($this->isAdmin()) {
+        if ($this->isAdminOrAbove()) {
             return $this->managedUsers()->pluck('id')->push($this->id)->all();
         }
 
@@ -109,7 +112,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function agencyPoolUserIds(): array
     {
-        if ($this->isAdmin()) {
+        if ($this->isAdminOrAbove()) {
             return $this->visibleUserIds();
         }
 
@@ -117,7 +120,11 @@ class User extends Authenticatable implements MustVerifyEmail
             $admin = $this->relationLoaded('admin') ? $this->admin : $this->admin()->first();
 
             if ($admin) {
-                return $admin->visibleUserIds();
+                $pool = $admin->visibleUserIds();
+                if (! in_array($this->id, $pool, true)) {
+                    $pool[] = $this->id;
+                }
+                return $pool;
             }
         }
 

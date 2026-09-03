@@ -99,12 +99,20 @@ class Tree extends Model
         $poolIds = $user->agencyPoolUserIds();
         $agencyId = $user->effectiveAgencyId();
 
-        if ($agencyId || $user->isAdmin() || $user->admin_id) {
-            return $query->where(function ($q) use ($poolIds, $agencyId) {
+        if ($agencyId || $user->isAdminOrAbove() || $user->admin_id) {
+            return $query->where(function ($q) use ($poolIds, $agencyId, $user) {
                 $q->whereIn('recorded_by_id', $poolIds);
 
                 if ($agencyId) {
                     $q->orWhere('agency_id', $agencyId);
+                }
+
+                // A monitor also sees all trees planted by their assigned admin or any planter under that admin
+                if ($user->isMonitor() && $user->admin_id) {
+                    $q->orWhere('recorded_by_id', $user->admin_id)
+                      ->orWhereHas('recordedBy', function ($rq) use ($user) {
+                          $rq->where('admin_id', $user->admin_id);
+                      });
                 }
             });
         }

@@ -19,26 +19,37 @@ class TreePolicy
 
     public function create(User $user): bool
     {
-        // Monitors sync/edit only; planters and admins plant.
+        // Monitors sync/edit only; planters and admins plant/add data.
         return ! $user->isMonitor();
     }
 
     public function update(User $user, Tree $tree): bool
     {
+        // Planters can only add data; they cannot edit existing trees.
+        if ($user->isPlanter()) {
+            return false;
+        }
+
         return $this->owns($user, $tree);
     }
 
     public function delete(User $user, Tree $tree): bool
     {
+        // Planters cannot delete trees.
+        if ($user->isPlanter()) {
+            return false;
+        }
+
         return $this->owns($user, $tree);
     }
 
     /**
-     * A user may act on a tree only if they own it. Super Admins bypass the
-     * ownership check entirely. Planters own only the trees they recorded themselves.
-     * An admin owns every tree recorded by a managed user, plus every tree
-     * tagged with their agency. A monitor may view trees in their admin's
-     * agency pool. Must stay in sync with Tree::scopeOwnedBy.
+     * A user may act on a tree only if they own it or are authorized.
+     * Super Admins bypass the ownership check entirely.
+     * Planters own/view only the trees they recorded themselves.
+     * An admin owns every tree recorded in their pool or tagged with their agency.
+     * A monitor can monitor and edit all trees planted under their assigned admin.
+     * Must stay in sync with Tree::scopeOwnedBy.
      */
     private function owns(User $user, Tree $tree): bool
     {
@@ -47,15 +58,29 @@ class TreePolicy
         }
 
         if ($user->isPlanter()) {
-            return $tree->recorded_by_id === $user->id;
+            return (int) $tree->recorded_by_id === (int) $user->id;
         }
 
         if (in_array($tree->recorded_by_id, $user->agencyPoolUserIds(), true)) {
             return true;
         }
 
+        // Monitors with assigned admin can access trees recorded by that admin or their planters
+        if ($user->isMonitor() && $user->admin_id) {
+            if ((int) $tree->recorded_by_id === (int) $user->admin_id) {
+                return true;
+            }
+            $recorder = $tree->relationLoaded('recordedBy')
+                ? $tree->recordedBy
+                : User::find($tree->recorded_by_id);
+
+            if ($recorder && (int) $recorder->admin_id === (int) $user->admin_id) {
+                return true;
+            }
+        }
+
         $agencyId = $user->effectiveAgencyId();
 
-        return $agencyId !== null && $tree->agency_id === $agencyId;
+        return $agencyId !== null && (int) $tree->agency_id === (int) $agencyId;
     }
 }
