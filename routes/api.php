@@ -106,7 +106,9 @@ Route::middleware(['auth:sanctum', 'account.status'])->group(function () {
     Route::delete('planting-monitorings/{id}/force', [PlantingMonitoringController::class, 'forceDestroy']);
     Route::apiResource('planting-monitorings', PlantingMonitoringController::class);
     Route::get('reports/planting-monitoring/pdf', [PlantingMonitoringController::class, 'exportPdf']);
+    Route::get('reports/planting-monitoring/csv', [PlantingMonitoringController::class, 'exportCsv']);
     Route::get('dashboard/stats', [DashboardController::class, 'stats']);
+    Route::post('trees/{tree}', [TreeController::class, 'update']);
     Route::apiResource('trees', TreeController::class);
 
     // Tree Incident & Inspection Reports

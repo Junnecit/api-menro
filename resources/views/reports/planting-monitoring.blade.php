@@ -571,19 +571,21 @@
         <div class="section-title">MONITORED PLANTING RECORD DETAILS</div>
         <table class="data-table">
             <colgroup>
+                <col style="width: 10%">
                 <col style="width: 8%">
-                <col style="width: 18%">
-                <col style="width: 16%">
+                <col style="width: 17%">
                 <col style="width: 14%">
+                <col style="width: 12%">
                 <col style="width: 8%">
                 <col style="width: 7%">
+                <col style="width: 5%">
                 <col style="width: 7%">
+                <col style="width: 5%">
                 <col style="width: 7%">
-                <col style="width: 7%">
-                <col style="width: 8%">
             </colgroup>
             <thead>
                 <tr>
+                    <th rowspan="2" class="left">Request No.</th>
                     <th rowspan="2" class="left">Date Planted</th>
                     <th rowspan="2" class="left">Agency / Requester</th>
                     <th rowspan="2" class="left">Area Planted</th>
@@ -610,6 +612,7 @@
                         $rate = $record->seedlings_planted > 0 ? ($record->survived_count / $record->seedlings_planted * 100) : 0;
                     @endphp
                     <tr>
+                        <td class="left" style="font-weight: bold; color: #065f46;">{{ $req?->request_no ?: ('#' . $record->request_id) }}</td>
                         <td class="left">{{ optional($req?->request_date)->format('m/d/Y') ?? $req?->created_at?->format('m/d/Y') ?? '—' }}</td>
                         <td class="left">{{ $partnerName }}</td>
                         <td class="left">{{ $locationName }}</td>
@@ -626,12 +629,12 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="10">No monitoring records match the selected filters.</td></tr>
+                    <tr><td colspan="11">No monitoring records match the selected filters.</td></tr>
                 @endforelse
 
                 @if($recordCount > 1)
                     <tr class="total-row">
-                        <td colspan="5" class="left">OVERALL TOTALS ({{ $recordCount }} RECORDS)</td>
+                        <td colspan="6" class="left">OVERALL TOTALS ({{ $recordCount }} RECORDS)</td>
                         <td>{{ number_format($totals['seedlings_planted']) }}</td>
                         <td>{{ number_format($totals['replanted_count']) }}</td>
                         <td>{{ number_format($totals['survived_count']) }}</td>
@@ -864,19 +867,21 @@
 
         <table class="data-table">
             <colgroup>
+                <col style="width: 10%">
                 <col style="width: 8%">
-                <col style="width: 18%">
-                <col style="width: 16%">
+                <col style="width: 17%">
                 <col style="width: 14%">
+                <col style="width: 12%">
                 <col style="width: 8%">
                 <col style="width: 7%">
+                <col style="width: 5%">
                 <col style="width: 7%">
+                <col style="width: 5%">
                 <col style="width: 7%">
-                <col style="width: 7%">
-                <col style="width: 8%">
             </colgroup>
             <thead>
                 <tr>
+                    <th rowspan="2" class="left">Request No.</th>
                     <th rowspan="2" class="left">Date Planted</th>
                     <th rowspan="2" class="left">Agency / Requester</th>
                     <th rowspan="2" class="left">Area Planted</th>
@@ -903,6 +908,7 @@
                         $rate = $record->seedlings_planted > 0 ? ($record->survived_count / $record->seedlings_planted * 100) : 0;
                     @endphp
                     <tr>
+                        <td class="left" style="font-weight: bold; color: #065f46;">{{ $req?->request_no ?: ('#' . $record->request_id) }}</td>
                         <td class="left">{{ optional($req?->request_date)->format('m/d/Y') ?? $req?->created_at?->format('m/d/Y') ?? '—' }}</td>
                         <td class="left">{{ $partnerName }}</td>
                         <td class="left">{{ $locationName }}</td>
@@ -919,10 +925,10 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="10">No monitoring records match the selected filters.</td></tr>
+                    <tr><td colspan="11">No monitoring records match the selected filters.</td></tr>
                 @endforelse
                 <tr class="total-row">
-                    <td colspan="5" class="left">OVERALL TOTALS</td>
+                    <td colspan="6" class="left">OVERALL TOTALS</td>
                     <td>{{ number_format($totals['seedlings_planted']) }}</td>
                     <td>{{ number_format($totals['replanted_count']) }}</td>
                     <td>{{ number_format($totals['survived_count']) }}</td>

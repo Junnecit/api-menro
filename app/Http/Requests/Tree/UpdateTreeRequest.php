@@ -29,6 +29,14 @@ class UpdateTreeRequest extends FormRequest
             'inspector_id' => ['nullable', 'exists:users,id'],
             'agency_id' => ['nullable', 'exists:agencies,id'],
             'notes' => ['nullable', 'string'],
+            'photos' => ['nullable', 'array', 'max:4'],
+            'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'photo_capture_modes' => ['nullable', 'array', 'max:4'],
+            'photo_capture_modes.*' => ['nullable', 'string', Rule::in(['single'])],
+            'photo_angles' => ['nullable', 'array', 'max:4'],
+            'photo_angles.*' => ['nullable', 'string', Rule::in(['N', 'E', 'S', 'W', ''])],
+            'deleted_photo_ids' => ['nullable', 'array'],
+            'deleted_photo_ids.*' => ['integer', 'exists:tree_photos,id'],
         ];
     }
 }

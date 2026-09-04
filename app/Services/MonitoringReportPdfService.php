@@ -18,7 +18,7 @@ class MonitoringReportPdfService
     public function make(Builder $query, array $filterMeta = []): \Barryvdh\DomPDF\PDF
     {
         $records = (clone $query)
-            ->with('request.agency')
+            ->with(['request.agency', 'request.user'])
             ->orderByDesc('date_monitoring')
             ->orderByDesc('id')
             ->get();
@@ -287,11 +287,20 @@ class MonitoringReportPdfService
     }
 
     /**
-     * @param  array{search?:string|null,agency_id?:int|null,date_from?:string|null,date_to?:string|null}  $filterMeta
+     * @param  array{search?:string|null,agency_id?:int|null,seedling_type?:string|null,ids?:array<int|string>|null,date_from?:string|null,date_to?:string|null}  $filterMeta
      */
     private function filterNote(array $filterMeta): ?string
     {
         $parts = [];
+
+        if (! empty($filterMeta['ids']) && is_array($filterMeta['ids'])) {
+            $count = count($filterMeta['ids']);
+            $parts[] = "Selected: {$count} record" . ($count === 1 ? '' : 's');
+        }
+
+        if (! empty($filterMeta['seedling_type'])) {
+            $parts[] = 'Seedling: '.$filterMeta['seedling_type'];
+        }
 
         if (! empty($filterMeta['search'])) {
             $parts[] = 'Search: '.$filterMeta['search'];

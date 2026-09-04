@@ -25,8 +25,8 @@ class TreePolicy
 
     public function update(User $user, Tree $tree): bool
     {
-        // Planters can only add data; they cannot edit existing trees.
-        if ($user->isPlanter()) {
+        // Only monitors and super admins may edit/update trees (admin and planters are excluded).
+        if (! $user->isMonitor() && ! $user->isSuperAdmin()) {
             return false;
         }
 

@@ -297,8 +297,20 @@ class TreeReportController extends Controller
             'search' => $request->query('search'),
         ]);
 
-        $filename = 'menro-tree-reports-summary-'.now()->format('Y-m-d-His').'.pdf';
-        $pdfBinary = $pdf->output();
+        $ids = null;
+        if ($request->has('ids')) {
+            $rawIds = $request->input('ids');
+            if (is_string($rawIds)) {
+                $rawIds = array_filter(array_map('trim', explode(',', $rawIds)));
+            }
+            if (is_array($rawIds) && count($rawIds) > 0) {
+                $ids = array_values(array_map('intval', $rawIds));
+            }
+        }
+
+        $title = ($ids && count($ids) > 0)
+            ? 'Tree Incident Reports Summary (' . count($ids) . ' Selected ' . (count($ids) === 1 ? 'Record' : 'Records') . ')'
+            : 'Tree Incident & Damage Reports Summary';
 
         try {
             $filePath = 'generated-reports/' . $filename;
@@ -308,12 +320,13 @@ class TreeReportController extends Controller
                 'user_id' => $request->user()?->id,
                 'agency_id' => $request->user()?->effectiveAgencyId(),
                 'report_type' => 'tree_reports',
-                'title' => 'Tree Incident & Damage Reports Summary',
+                'title' => $title,
                 'filename' => $filename,
                 'file_path' => $filePath,
                 'file_size' => strlen($pdfBinary),
                 'record_count' => $query->count(),
                 'filters' => array_filter([
+                    'ids' => $ids,
                     'status' => $request->query('status'),
                     'severity' => $request->query('severity'),
                     'report_type' => $request->query('report_type'),
@@ -321,7 +334,7 @@ class TreeReportController extends Controller
                     'date_from' => $request->query('date_from'),
                     'date_to' => $request->query('date_to'),
                     'search' => $request->query('search'),
-                ]),
+                ], fn ($val) => $val !== null && $val !== '' && $val !== []),
                 'generated_at' => now(),
             ]);
         } catch (\Throwable $e) {

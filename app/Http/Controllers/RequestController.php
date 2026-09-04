@@ -71,7 +71,16 @@ class RequestController extends Controller
     {
         $this->authorize('viewAny', PlantingRequest::class);
 
-        $query = $this->filteredQuery($request, PlantingRequest::query());
+        $ids = null;
+        if ($request->has('ids')) {
+            $rawIds = $request->input('ids');
+            if (is_string($rawIds)) {
+                $rawIds = array_filter(array_map('trim', explode(',', $rawIds)));
+            }
+            if (is_array($rawIds) && count($rawIds) > 0) {
+                $ids = array_values(array_map('intval', $rawIds));
+            }
+        }
 
         $pdf = $this->pdfService->makeRequestsSummaryPdf($query, [
             'search' => $request->input('search'),
@@ -79,6 +88,7 @@ class RequestController extends Controller
             'agency_id' => $request->filled('agency_id') ? $request->integer('agency_id') : null,
             'date_from' => $request->input('date_from'),
             'date_to' => $request->input('date_to'),
+            'ids' => $ids,
         ]);
 
         $filename = 'MENRO-Planting-Requests-Summary-'.now()->format('Y-m-d').'.pdf';
@@ -88,22 +98,27 @@ class RequestController extends Controller
             $filePath = 'generated-reports/' . $filename;
             \App\Support\PrivateStorage::put($filePath, $pdfBinary);
 
+            $title = ($ids && count($ids) > 0)
+                ? 'Planting Requests Summary (' . count($ids) . ' Selected ' . (count($ids) === 1 ? 'Record' : 'Records') . ')'
+                : 'Planting Requests & Projects Summary';
+
             \App\Models\GeneratedReport::create([
                 'user_id' => $request->user()?->id,
                 'agency_id' => $request->user()?->effectiveAgencyId(),
                 'report_type' => 'planting_requests',
-                'title' => 'Planting Requests & Projects Summary',
+                'title' => $title,
                 'filename' => $filename,
                 'file_path' => $filePath,
                 'file_size' => strlen($pdfBinary),
                 'record_count' => $query->count(),
                 'filters' => array_filter([
+                    'ids' => $ids,
                     'search' => $request->input('search'),
                     'status' => $request->input('status'),
                     'agency_id' => $request->input('agency_id'),
                     'date_from' => $request->input('date_from'),
                     'date_to' => $request->input('date_to'),
-                ]),
+                ], fn ($val) => $val !== null && $val !== '' && $val !== []),
                 'generated_at' => now(),
             ]);
         } catch (\Throwable $e) {
@@ -471,6 +486,16 @@ class RequestController extends Controller
 
         if ($request->filled('date_to')) {
             $query->whereDate('request_date', '<=', $request->input('date_to'));
+        }
+
+        if ($request->has('ids')) {
+            $ids = $request->input('ids');
+            if (is_string($ids)) {
+                $ids = array_filter(array_map('trim', explode(',', $ids)));
+            }
+            if (is_array($ids) && count($ids) > 0) {
+                $query->whereIn('id', $ids);
+            }
         }
 
         return $query;

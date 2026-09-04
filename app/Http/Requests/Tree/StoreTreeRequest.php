@@ -33,11 +33,11 @@ class StoreTreeRequest extends FormRequest
             'inspector_id' => ['nullable', 'exists:users,id'],
             'agency_id' => ['nullable', 'exists:agencies,id'],
             'notes' => ['nullable', 'string'],
-            'photos' => ['nullable', 'array', 'max:6'],
+            'photos' => ['nullable', 'array', 'max:4'],
             'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'photo_capture_modes' => ['nullable', 'array', 'max:6'],
-            'photo_capture_modes.*' => ['nullable', 'string', Rule::in(['single', '360'])],
-            'photo_angles' => ['nullable', 'array', 'max:6'],
+            'photo_capture_modes' => ['nullable', 'array', 'max:4'],
+            'photo_capture_modes.*' => ['nullable', 'string', Rule::in(['single'])],
+            'photo_angles' => ['nullable', 'array', 'max:4'],
             'photo_angles.*' => ['nullable', 'string', Rule::in(['N', 'E', 'S', 'W', ''])],
         ];
     }

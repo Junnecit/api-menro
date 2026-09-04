@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PlantingMonitoringController extends Controller
 {
@@ -170,12 +171,24 @@ class PlantingMonitoringController extends Controller
 
         $query = $this->filteredQuery($request, PlantingMonitoring::query());
 
+        $ids = null;
+        if ($request->has('ids')) {
+            $rawIds = $request->input('ids');
+            if (is_string($rawIds)) {
+                $rawIds = array_filter(array_map('trim', explode(',', $rawIds)));
+            }
+            if (is_array($rawIds) && count($rawIds) > 0) {
+                $ids = array_values(array_map('intval', $rawIds));
+            }
+        }
+
         $pdf = $this->reportPdf->make($query, [
             'search' => $request->input('search'),
             'seedling_type' => $request->input('seedling_type'),
             'agency_id' => $request->filled('agency_id') ? $request->integer('agency_id') : null,
             'date_from' => $request->input('date_from'),
             'date_to' => $request->input('date_to'),
+            'ids' => $ids,
         ]);
 
         $filename = 'menro-planting-monitoring-report-'.now()->format('Y-m-d-His').'.pdf';
@@ -186,10 +199,13 @@ class PlantingMonitoringController extends Controller
             $filePath = 'generated-reports/' . $filename;
             \App\Support\PrivateStorage::put($filePath, $pdfBinary);
 
-            $seedling = $request->input('seedling_type');
-            $title = $seedling
-                ? "Planting Monitoring Audit ({$seedling})"
-                : "Planting Monitoring Summary Report";
+            if ($ids && count($ids) > 0) {
+                $title = "Planting Monitoring Audit (" . count($ids) . " Selected " . (count($ids) === 1 ? "Record" : "Records") . ")";
+            } elseif ($request->filled('seedling_type')) {
+                $title = "Planting Monitoring Audit ({$request->input('seedling_type')})";
+            } else {
+                $title = "Planting Monitoring Summary Report";
+            }
 
             \App\Models\GeneratedReport::create([
                 'user_id' => $request->user()?->id,
@@ -201,11 +217,13 @@ class PlantingMonitoringController extends Controller
                 'file_size' => strlen($pdfBinary),
                 'record_count' => $query->count(),
                 'filters' => array_filter([
+                    'ids' => $ids,
                     'search' => $request->input('search'),
                     'seedling_type' => $request->input('seedling_type'),
+                    'agency_id' => $request->filled('agency_id') ? $request->integer('agency_id') : null,
                     'date_from' => $request->input('date_from'),
                     'date_to' => $request->input('date_to'),
-                ]),
+                ], fn ($val) => $val !== null && $val !== '' && $val !== []),
                 'generated_at' => now(),
             ]);
         } catch (\Throwable $e) {
@@ -218,9 +236,152 @@ class PlantingMonitoringController extends Controller
         ]);
     }
 
+    public function exportCsv(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $this->authorize('viewAny', PlantingMonitoring::class);
+
+        $query = $this->filteredQuery($request, PlantingMonitoring::query());
+
+        $ids = null;
+        if ($request->has('ids')) {
+            $rawIds = $request->input('ids');
+            if (is_string($rawIds)) {
+                $rawIds = array_filter(array_map('trim', explode(',', $rawIds)));
+            }
+            if (is_array($rawIds) && count($rawIds) > 0) {
+                $ids = array_values(array_map('intval', $rawIds));
+            }
+        }
+
+        $filename = 'menro-planting-monitoring-' . now()->format('Y-m-d-His') . '.csv';
+        $records = (clone $query)->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $columns = [
+            'Request No.',
+            'Date Planted',
+            'Agency / Requester',
+            'Area / Location',
+            'Seedling Type',
+            'Date Monitored',
+            'Seedlings Planted',
+            'Replanted Count',
+            'Survived Count',
+            'Died Count',
+            'Survival Rate (%)',
+        ];
+
+        // Save CSV to private storage and log history
+        try {
+            $csvBuffer = fopen('php://temp', 'r+');
+            fprintf($csvBuffer, chr(0xEF).chr(0xBB).chr(0xBF));
+            fputcsv($csvBuffer, $columns);
+
+            foreach ($records as $r) {
+                $req = $r->request;
+                $partner = $req?->agency?->name ?? $req?->user?->name ?? $req?->requester_name ?? '—';
+                $location = !empty($req?->barangay_code)
+                    ? \App\Support\TagoloanLocation::barangayName($req->barangay_code)
+                    : ($req?->location ?? '—');
+                $planted = (int) $r->seedlings_planted;
+                $survived = (int) $r->survived_count;
+                $rate = $planted > 0 ? round(($survived / $planted) * 100, 2) : 0;
+
+                fputcsv($csvBuffer, [
+                    $req?->request_no ?: ('#' . $r->request_id),
+                    optional($req?->request_date)->format('Y-m-d') ?? $req?->created_at?->format('Y-m-d') ?? '—',
+                    $partner,
+                    $location,
+                    $r->seedling_type,
+                    optional($r->date_monitoring)->format('Y-m-d') ?? '—',
+                    $planted,
+                    (int) $r->replanted_count,
+                    $survived,
+                    (int) $r->died_count,
+                    $rate,
+                ]);
+            }
+
+            rewind($csvBuffer);
+            $csvContent = stream_get_contents($csvBuffer);
+            fclose($csvBuffer);
+
+            $filePath = 'generated-reports/' . $filename;
+            \App\Support\PrivateStorage::put($filePath, $csvContent);
+
+            $title = ($ids && count($ids) > 0)
+                ? "Planting Monitoring CSV Export (" . count($ids) . " Selected Records)"
+                : "Planting Monitoring CSV Export";
+
+            \App\Models\GeneratedReport::create([
+                'user_id' => $request->user()?->id,
+                'agency_id' => $request->user()?->effectiveAgencyId(),
+                'report_type' => 'planting_monitoring',
+                'title' => $title,
+                'filename' => $filename,
+                'file_path' => $filePath,
+                'file_size' => strlen($csvContent),
+                'record_count' => $records->count(),
+                'filters' => array_filter([
+                    'ids' => $ids,
+                    'search' => $request->input('search'),
+                    'seedling_type' => $request->input('seedling_type'),
+                    'agency_id' => $request->filled('agency_id') ? $request->integer('agency_id') : null,
+                    'date_from' => $request->input('date_from'),
+                    'date_to' => $request->input('date_to'),
+                ], fn ($val) => $val !== null && $val !== '' && $val !== []),
+                'generated_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to log generated CSV report: ' . $e->getMessage());
+        }
+
+        $callback = function () use ($columns, $records) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fputcsv($file, $columns);
+
+            foreach ($records as $r) {
+                $req = $r->request;
+                $partner = $req?->agency?->name ?? $req?->user?->name ?? $req?->requester_name ?? '—';
+                $location = !empty($req?->barangay_code)
+                    ? \App\Support\TagoloanLocation::barangayName($req->barangay_code)
+                    : ($req?->location ?? '—');
+                $planted = (int) $r->seedlings_planted;
+                $survived = (int) $r->survived_count;
+                $rate = $planted > 0 ? round(($survived / $planted) * 100, 2) : 0;
+
+                fputcsv($file, [
+                    $req?->request_no ?: ('#' . $r->request_id),
+                    optional($req?->request_date)->format('Y-m-d') ?? $req?->created_at?->format('Y-m-d') ?? '—',
+                    $partner,
+                    $location,
+                    $r->seedling_type,
+                    optional($r->date_monitoring)->format('Y-m-d') ?? '—',
+                    $planted,
+                    (int) $r->replanted_count,
+                    $survived,
+                    (int) $r->died_count,
+                    $rate,
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     private function filteredQuery(Request $request, Builder $query): Builder
     {
-        $query = $query->with('request.agency')
+        $query = $query->with(['request.agency', 'request.user'])
             ->orderByDesc('date_monitoring')
             ->orderByDesc('id');
 

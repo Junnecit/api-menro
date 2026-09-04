@@ -117,7 +117,7 @@ class TreeController extends Controller
 
             $tree->photos()->create([
                 'path' => \App\Support\PrivateStorage::store($photo, "tree-photos/{$tree->id}"),
-                'capture_mode' => in_array($mode, ['single', '360'], true) ? $mode : null,
+                'capture_mode' => in_array($mode, ['single'], true) ? $mode : null,
                 'angle' => in_array($angle, ['N', 'E', 'S', 'W'], true) ? $angle : null,
             ]);
         }
@@ -143,10 +143,31 @@ class TreeController extends Controller
     {
         $this->authorize('update', $tree);
 
+        $payload = $request->safe()->except(['photos', 'photo_capture_modes', 'photo_angles', 'deleted_photo_ids']);
+
         $tree->update([
-            ...$request->validated(),
+            ...$payload,
             'updated_by_id' => $request->user()->id,
         ]);
+
+        if ($request->filled('deleted_photo_ids')) {
+            $toDelete = $tree->photos()->whereIn('id', $request->input('deleted_photo_ids'))->get();
+            foreach ($toDelete as $photo) {
+                \App\Support\PrivateStorage::delete($photo->path);
+                $photo->delete();
+            }
+        }
+
+        foreach ($request->file('photos', []) as $index => $photo) {
+            $mode = $request->input("photo_capture_modes.$index");
+            $angle = $request->input("photo_angles.$index");
+
+            $tree->photos()->create([
+                'path' => \App\Support\PrivateStorage::store($photo, "tree-photos/{$tree->id}"),
+                'capture_mode' => in_array($mode, ['single'], true) ? $mode : null,
+                'angle' => in_array($angle, ['N', 'E', 'S', 'W'], true) ? $angle : null,
+            ]);
+        }
 
         $fresh = $tree->fresh()->load(self::RELATIONS);
         app(\App\Services\TreeUpdateNotifier::class)->notifyRecorder($fresh, $request->user());
