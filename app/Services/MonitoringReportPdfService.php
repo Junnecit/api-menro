@@ -299,7 +299,7 @@ class MonitoringReportPdfService
         }
 
         if (! empty($filterMeta['seedling_type'])) {
-            $parts[] = 'Seedling: '.$filterMeta['seedling_type'];
+            $parts[] = 'Species: '.$filterMeta['seedling_type'];
         }
 
         if (! empty($filterMeta['search'])) {

@@ -269,7 +269,7 @@ class PlantingMonitoringController extends Controller
             'Date Planted',
             'Agency / Requester',
             'Area / Location',
-            'Seedling Type',
+            'Species',
             'Date Monitored',
             'Seedlings Planted',
             'Replanted Count',

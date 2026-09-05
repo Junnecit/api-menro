@@ -1,0 +1,44 @@
+Year,Source Sheet,Record Type,Date Planted,Person / Agency,Area Planted,Type of Seedling,Monitoring Date,Seedlings Planted,Re-plant,Plants Survived,Plants Died,Survival Rate (%)
+2021.0,BRGY. SANTA ANA,Planting,2021-03-08,,Santa Ana,Bamboo,,,150.0,,,
+2021.0,BRGY. SANTA ANA,Planting,2021-10-22,,Santa Ana,Bamboo,,350.0,200.0,,,
+2022.0,BRGY. ROSARIO,Planting,2022-02-16,,Rosario,Narra/Naga,,30.0,,30.0,,100.0
+2022.0,BRGY. ROSARIO,Planting,2022-02-16,,,Acacia,,21.0,,21.0,,100.0
+2022.0,BRGY. ROSARIO,Planting,2022-02-16,,,Mahogany,,87.0,,87.0,,100.0
+2022.0,BRGY. ROSARIO,Planting,2022-02-16,,,Fire Tree,,25.0,,20.0,5.0,92.0
+2022.0,BRGY. ROSARIO,Planting,2022-02-16,,,TAMBIS/MAKOPA,,6.0,,6.0,,100.0
+2022.0,BRGY. ROSARIO,Planting,2022-02-16,,,OTHER,,,,,,
+2022.0,BRGY. SANTA ANA,Planting,2022-03-25,SAN MIGUEL,Santa Ana,Bamboo,,,150.0,,,
+2022.0,BRGY. SANTA ANA,Planting,2022-03-25,,Santa Ana,Bamboo,,650.0,,,,
+2024.0,2024,Planting + Monitoring,2024-02-16,,"Sitio Kalabat, Santa Ana",Bamboo,2024-12-15,100.0,25.0,75.0,25.0,75.0
+2024.0,2024,Planting + Monitoring,2024-03-21,BFP,"Nabulod, Baluarte",Mangrove,2024-10-17,100.0,25.0,75.0,25.0,75.0
+2024.0,2024,Planting + Monitoring,2024-03-22,MENRO,Baluarte,Mangrove,2024-12-15,300.0,34.0,266.0,34.0,88.67
+2024.0,2024,Planting + Monitoring,2024-04-20,,Baluarte,Mangrove,2024-12-15,200.0,50.0,150.0,50.0,75.0
+2024.0,2024,Planting + Monitoring,2024-06-01,COAST GUARD,"Sitio Kalabat, Santa Ana",Bamboo/Fruit Trees,2024-11-05,100.0,30.0,70.0,30.0,70.0
+2024.0,2024,Planting + Monitoring,2024-06-24,FDC,"Sitio Kalabat, Santa Ana",Bagras,2024-11-05,100.0,50.0,50.0,50.0,50.0
+2024.0,2024,Planting + Monitoring,2024-06-28,,"Nabulod, Baluarte",Mangrove,2024-11-05,100.0,17.0,83.0,17.0,83.0
+2024.0,2024,Planting + Monitoring,2024-07-18,MDRR/MENRO,"Sitio Kalabat, Santa Ana",Bamboo/Fruit Trees,2024-10-17,150.0,50.0,100.0,50.0,66.67
+2024.0,2024,Planting + Monitoring,2024-09-28,SENIOR HIGH,Baluarte,Mangrove,2024-11-05,200.0,23.0,177.0,23.0,88.5
+2024.0,2024,Planting + Monitoring,2024-10-18,LGU,"Sitio Kalabat, Santa Ana",Bamboo,2024-10-17,800.0,147.0,653.0,147.0,81.62
+2024.0,2024,Planting + Monitoring,2024-10-18,BJMP,Baluarte,Mangrove,2024-12-15,50.0,13.0,37.0,13.0,74.0
+2024.0,2024,Planting + Monitoring,2024-11-05,TCC,Baluarte,Mangrove,2024-12-15,500.0,127.0,373.0,127.0,74.6
+2024.0,2024,Planting + Monitoring,2024-11-21,VIPEL,Baluarte,Mangrove,2024-10-17,100.0,5.0,70.0,30.0,70.0
+2024.0,2024,Planting + Monitoring,2024-12-19,BOSTIK,Rosario,Fruit Trees,2024-12-15,100.0,20.0,80.0,20.0,80.0
+2025.0,2025,Planting + Monitoring,2025-01-15,BFP,"Nabulod, Baluarte",Mangrove,2025-04-20,50.0,12.0,38.0,12.0,76.0
+2025.0,2025,Planting + Monitoring,2025-02-05,BJMP,"Nabulod, Baluarte",Mangrove,2025-04-04,20.0,8.0,12.0,8.0,60.0
+2025.0,2025,Planting + Monitoring,2025-05-16,ARCHEM,Sta. Ana,Bamboo,2025-05-16,100.0,20.0,80.0,20.0,80.0
+2025.0,2025,Planting + Monitoring,2025-06-05,FDC,Sta. Cruz,Bamboo,2025-06-30,200.0,5.0,195.0,5.0,97.5
+2026.0,2026,Planting Only,2026-03-23,TCC,Calabat,Pine,,60.0,,,,
+2021.0,BRGY. SANTA ANA,Monitoring,,,Santa Ana,Bamboo,2021-03-23,,,177.0,19.0,50.6
+2021.0,BRGY. SANTA ANA,Monitoring,,,Santa Ana,Bamboo,2021-10-01,,,43.0,191.0,12.3
+2021.0,BRGY. SANTA ANA,Monitoring,,,Santa Ana,Bamboo,2021-12-02,,500.0,108.0,54.0,30.9
+2021.0,BRGY. SANTA ANA,Monitoring,,,Santa Ana,Bamboo,2021-12-31,,,321.0,87.0,91.7
+2022.0,BRGY. ROSARIO,Monitoring,,,Rosario,Narra/Naga,2022-03-28,30.0,,30.0,,100.0
+2022.0,BRGY. ROSARIO,Monitoring,,,,Acacia,2022-03-28,21.0,,21.0,,100.0
+2022.0,BRGY. ROSARIO,Monitoring,,,,Mahogany,2022-03-28,87.0,,87.0,,100.0
+2022.0,BRGY. ROSARIO,Monitoring,,,,Fire Tree,2022-03-28,25.0,,20.0,5.0,92.0
+2022.0,BRGY. ROSARIO,Monitoring,,,,TAMBIS/MAKOPA,2022-03-28,6.0,,6.0,,100.0
+2022.0,BRGY. ROSARIO,Monitoring,,,SCHOOL PERIMETER,Acacia,2022-04-16,,,10.0,2.0,83.0
+2022.0,BRGY. ROSARIO,Monitoring,,,COMUNAL AREA,Narra/Naga,2022-04-16,,,3.0,1.0,75.0
+2022.0,BRGY. ROSARIO,Monitoring,,,CEMETERY,Mahogany,2022-04-16,,,26.0,5.0,84.0
+2022.0,BRGY. ROSARIO,Monitoring,,,SIBUKAHON,Fire Tree/Palcata,2022-04-16,,,21.0,0.0,100.0
+2022.0,BRGY. SANTA ANA,Monitoring,,,,,2022-05-13,,,115.0,236.0,12.0

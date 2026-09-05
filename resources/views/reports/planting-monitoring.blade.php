@@ -589,7 +589,7 @@
                     <th rowspan="2" class="left">Date Planted</th>
                     <th rowspan="2" class="left">Agency / Requester</th>
                     <th rowspan="2" class="left">Area Planted</th>
-                    <th rowspan="2" class="left">Seedling Type</th>
+                    <th rowspan="2" class="left">Species</th>
                     <th colspan="6" style="border-bottom: 1px solid #cbd5e1;">Monitoring Data</th>
                 </tr>
                 <tr>
@@ -885,7 +885,7 @@
                     <th rowspan="2" class="left">Date Planted</th>
                     <th rowspan="2" class="left">Agency / Requester</th>
                     <th rowspan="2" class="left">Area Planted</th>
-                    <th rowspan="2" class="left">Seedling Type</th>
+                    <th rowspan="2" class="left">Species</th>
                     <th colspan="6" style="border-bottom: 1px solid #cbd5e1;">Monitoring Data</th>
                 </tr>
                 <tr>
